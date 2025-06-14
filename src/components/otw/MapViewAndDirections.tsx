@@ -48,15 +48,23 @@ const deliveryIcon = new L.Icon({
 const FitBoundsToMarkers = ({ orders }: { orders: Order[] }) => {
   const map = useMap();
   React.useEffect(() => {
-    if (orders.length > 0) {
+    if (map && orders && orders.length > 0) {
       const bounds = new L.LatLngBounds();
+      let validCoordsExist = false;
       orders.forEach(order => {
-        bounds.extend([order.pickupCoordinates.lat, order.pickupCoordinates.lng]);
-        bounds.extend([order.deliveryCoordinates.lat, order.deliveryCoordinates.lng]);
+        if (order.pickupCoordinates && typeof order.pickupCoordinates.lat === 'number' && typeof order.pickupCoordinates.lng === 'number') {
+          bounds.extend([order.pickupCoordinates.lat, order.pickupCoordinates.lng]);
+          validCoordsExist = true;
+        }
+        if (order.deliveryCoordinates && typeof order.deliveryCoordinates.lat === 'number' && typeof order.deliveryCoordinates.lng === 'number') {
+          bounds.extend([order.deliveryCoordinates.lat, order.deliveryCoordinates.lng]);
+          validCoordsExist = true;
+        }
       });
-      if (bounds.isValid()) {
+
+      if (validCoordsExist && bounds.isValid()) {
         map.fitBounds(bounds, { padding: [50, 50] });
-      } else if (orders[0]) {
+      } else if (orders[0]?.pickupCoordinates && typeof orders[0].pickupCoordinates.lat === 'number' && typeof orders[0].pickupCoordinates.lng === 'number') {
          map.setView([orders[0].pickupCoordinates.lat, orders[0].pickupCoordinates.lng], 13);
       }
     }
@@ -88,16 +96,24 @@ export function MapViewAndDirections({ routeResult }: MapViewAndDirectionsProps)
     );
   }
 
-  const defaultPosition: LatLngExpression = [ordersInRoute[0].pickupCoordinates.lat, ordersInRoute[0].pickupCoordinates.lng];
+  const firstOrderWithPickupCoords = ordersInRoute.find(order => order.pickupCoordinates && typeof order.pickupCoordinates.lat === 'number' && typeof order.pickupCoordinates.lng === 'number');
+  
+  const defaultPosition: LatLngExpression = firstOrderWithPickupCoords 
+    ? [firstOrderWithPickupCoords.pickupCoordinates.lat, firstOrderWithPickupCoords.pickupCoordinates.lng]
+    : [34.0522, -118.2437]; // Fallback default position
   
   const polylinePositions: LatLngExpression[] = [];
   ordersInRoute.forEach(order => {
-    polylinePositions.push([order.pickupCoordinates.lat, order.pickupCoordinates.lng]);
-    polylinePositions.push([order.deliveryCoordinates.lat, order.deliveryCoordinates.lng]);
+    if (order.pickupCoordinates && typeof order.pickupCoordinates.lat === 'number' && typeof order.pickupCoordinates.lng === 'number') {
+      polylinePositions.push([order.pickupCoordinates.lat, order.pickupCoordinates.lng]);
+    }
+    if (order.deliveryCoordinates && typeof order.deliveryCoordinates.lat === 'number' && typeof order.deliveryCoordinates.lng === 'number') {
+      polylinePositions.push([order.deliveryCoordinates.lat, order.deliveryCoordinates.lng]);
+    }
   });
 
   const mapKey = React.useMemo(() => 
-    ordersInRoute.map(o => o.orderId).join('-'),
+    ordersInRoute.map(o => o.orderId).join('-') + (ordersInRoute[0]?.pickupCoordinates?.lat || ''), // Add a coordinate to ensure key changes if data changes subtly
     [ordersInRoute]
   );
 
@@ -129,26 +145,30 @@ export function MapViewAndDirections({ routeResult }: MapViewAndDirectionsProps)
               />
               {ordersInRoute.map((order) => (
                 <React.Fragment key={order.orderId}>
-                  <Marker 
-                    position={[order.pickupCoordinates.lat, order.pickupCoordinates.lng]}
-                    icon={pickupIcon}
-                  >
-                    <Popup>
-                      <strong>Pickup: Order {order.orderId}</strong><br />
-                      {order.customerName}<br />
-                      {order.pickupAddress}
-                    </Popup>
-                  </Marker>
-                  <Marker 
-                    position={[order.deliveryCoordinates.lat, order.deliveryCoordinates.lng]}
-                    icon={deliveryIcon}
-                  >
-                    <Popup>
-                      <strong>Delivery: Order {order.orderId}</strong><br />
-                      {order.customerName}<br />
-                      {order.deliveryAddress}
-                    </Popup>
-                  </Marker>
+                  {order.pickupCoordinates && typeof order.pickupCoordinates.lat === 'number' && typeof order.pickupCoordinates.lng === 'number' && (
+                    <Marker 
+                      position={[order.pickupCoordinates.lat, order.pickupCoordinates.lng]}
+                      icon={pickupIcon}
+                    >
+                      <Popup>
+                        <strong>Pickup: Order {order.orderId}</strong><br />
+                        {order.customerName}<br />
+                        {order.pickupAddress}
+                      </Popup>
+                    </Marker>
+                  )}
+                  {order.deliveryCoordinates && typeof order.deliveryCoordinates.lat === 'number' && typeof order.deliveryCoordinates.lng === 'number' && (
+                    <Marker 
+                      position={[order.deliveryCoordinates.lat, order.deliveryCoordinates.lng]}
+                      icon={deliveryIcon}
+                    >
+                      <Popup>
+                        <strong>Delivery: Order {order.orderId}</strong><br />
+                        {order.customerName}<br />
+                        {order.deliveryAddress}
+                      </Popup>
+                    </Marker>
+                  )}
                 </React.Fragment>
               ))}
               {polylinePositions.length > 1 && <Polyline positions={polylinePositions} color="teal" weight={3} />}
