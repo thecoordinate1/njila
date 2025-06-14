@@ -1,3 +1,4 @@
+
 // src/components/otw/MapViewAndDirections.tsx
 "use client";
 
@@ -22,10 +23,6 @@ L.Icon.Default.mergeOptions({
   iconUrl: iconUrl.src,
   shadowUrl: shadowUrl.src,
 });
-
-interface MapViewAndDirectionsProps {
-  routeResult: OptimizedRouteResult;
-}
 
 const pickupIcon = new L.Icon({
   iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
@@ -65,20 +62,49 @@ const FitBoundsToMarkers = ({ orders }: { orders: Order[] }) => {
       if (validCoordsExist && bounds.isValid()) {
         map.fitBounds(bounds, { padding: [50, 50] });
       }
-      // Removed the else-if map.setView fallback, MapContainer's center prop should handle initial view.
     }
   }, [orders, map]);
   return null;
 };
 
+interface MapViewAndDirectionsProps {
+  routeResult: OptimizedRouteResult;
+}
 
 export function MapViewAndDirections({ routeResult }: MapViewAndDirectionsProps) {
+  // The key on MapViewAndDirections in page.tsx (`mapViewKey`) forces
+  // this component to re-mount when `optimizedRouteResult` itself changes.
+  // This is the primary mechanism for ensuring a clean map state.
+
   if (!routeResult) {
-    return null;
+    return null; // Should not happen if parent keying and conditional rendering is correct
   }
   
   const { ordersInRoute, directions } = routeResult;
 
+  // Key for the MapContainer itself. Changes if the orders in the route change.
+  // This is a secondary measure.
+  const mapContainerKey = React.useMemo(() => {
+    if (!ordersInRoute || ordersInRoute.length === 0) {
+      return 'map-container-no-orders';
+    }
+    return `map-container-${ordersInRoute.map(o => o.orderId).join('-')}`;
+  }, [ordersInRoute]);
+  
+  // Calculate default position for the map center.
+  const defaultPosition = React.useMemo<LatLngExpression>(() => {
+    const firstOrderWithPickupCoords = ordersInRoute?.find(order => 
+      order.pickupCoordinates && 
+      typeof order.pickupCoordinates.lat === 'number' && 
+      typeof order.pickupCoordinates.lng === 'number'
+    );
+    
+    return firstOrderWithPickupCoords 
+      ? [firstOrderWithPickupCoords.pickupCoordinates.lat, firstOrderWithPickupCoords.pickupCoordinates.lng]
+      : [34.0522, -118.2437]; // Fallback default (e.g., Los Angeles)
+  }, [ordersInRoute]);
+
+  // If there are no orders to display on the map, show a message instead of rendering MapContainer.
   if (!ordersInRoute || ordersInRoute.length === 0) {
     return (
       <Card className="shadow-lg w-full mt-6">
@@ -89,22 +115,12 @@ export function MapViewAndDirections({ routeResult }: MapViewAndDirectionsProps)
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p>No orders in the route to display on the map.</p>
+          <p>No orders in the current route to display on the map.</p>
         </CardContent>
       </Card>
     );
   }
 
-  const firstOrderWithPickupCoords = ordersInRoute.find(order => 
-    order.pickupCoordinates && 
-    typeof order.pickupCoordinates.lat === 'number' && 
-    typeof order.pickupCoordinates.lng === 'number'
-  );
-  
-  const defaultPosition: LatLngExpression = firstOrderWithPickupCoords 
-    ? [firstOrderWithPickupCoords.pickupCoordinates.lat, firstOrderWithPickupCoords.pickupCoordinates.lng]
-    : [34.0522, -118.2437]; // Fallback default position (e.g., Los Angeles)
-  
   const polylinePositions: LatLngExpression[] = [];
   ordersInRoute.forEach(order => {
     if (order.pickupCoordinates && typeof order.pickupCoordinates.lat === 'number' && typeof order.pickupCoordinates.lng === 'number') {
@@ -114,13 +130,6 @@ export function MapViewAndDirections({ routeResult }: MapViewAndDirectionsProps)
       polylinePositions.push([order.deliveryCoordinates.lat, order.deliveryCoordinates.lng]);
     }
   });
-
-  const mapContainerKey = React.useMemo(() => 
-    ordersInRoute.map(o => o.orderId).join('-') + 
-    (firstOrderWithPickupCoords?.pickupCoordinates?.lat || 'defaultLat') +
-    (firstOrderWithPickupCoords?.pickupCoordinates?.lng || 'defaultLng'),
-    [ordersInRoute, firstOrderWithPickupCoords]
-  );
 
 
   return (
@@ -204,4 +213,3 @@ export function MapViewAndDirections({ routeResult }: MapViewAndDirectionsProps)
     </Card>
   );
 }
-
