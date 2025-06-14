@@ -9,9 +9,10 @@ interface OptimizeRouteActionResult {
   error?: string;
 }
 
+// Ensure the input type matches the updated Order type which includes coordinates
 export async function handleOptimizeDeliveryRoute(
-  orders: Pick<Order, 'orderId' | 'pickupAddress' | 'deliveryAddress'>[],
-  vehicleType: 'car' | 'bike' // vehicleType is kept as it's part of the form, though not used in this mock
+  orders: Array<Pick<Order, 'orderId' | 'pickupAddress' | 'deliveryAddress' | 'pickupCoordinates' | 'deliveryCoordinates'>>,
+  vehicleType: 'car' | 'bike' 
 ): Promise<OptimizeRouteActionResult> {
   if (!orders || orders.length === 0) {
     return { success: false, error: "No orders provided for optimization." };
@@ -25,13 +26,19 @@ export async function handleOptimizeDeliveryRoute(
   const mockDirections: string[] = [];
   const ordersMap = new Map(orders.map(o => [o.orderId, o]));
 
-  mockOptimizedRoute.forEach((orderId, index) => {
+  mockOptimizedRoute.forEach((orderId) => {
     const order = ordersMap.get(orderId);
     if (order) {
-      mockDirections.push(`Step ${mockDirections.length + 1}: Pick up order ${order.orderId} at "${order.pickupAddress}".`);
-      mockDirections.push(`Step ${mockDirections.length + 1}: Deliver order ${order.orderId} to "${order.deliveryAddress}".`);
+      mockDirections.push(`Pick up order ${order.orderId} (${order.customerName}) from "${order.pickupAddress}".`);
+      mockDirections.push(`Deliver order ${order.orderId} to "${order.deliveryAddress}".`);
     }
   });
+
+  // Add a final step
+  if (mockDirections.length > 0) {
+    mockDirections.push("Route finished. All orders handled.");
+  }
+
 
   const mockData: OptimizeDeliveryRouteOutput = {
     optimizedRoute: mockOptimizedRoute,

@@ -2,20 +2,100 @@
 "use client";
 
 import * as React from 'react';
-import Image from 'next/image';
-import type { OptimizedRouteResult } from "@/types";
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
+import L, { LatLngExpression, LatLngBounds } from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import type { OptimizedRouteResult, Order } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { MapIcon, ListOrdered as ListOrderedIcon } from "lucide-react";
+import { MapIcon, ListOrdered as ListOrderedIcon,Navigation } from "lucide-react";
+
+// Fix for default Leaflet marker icons not appearing correctly with Webpack
+import iconRetinaUrl from 'leaflet/dist/images/marker-icon-2x.png';
+import iconUrl from 'leaflet/dist/images/marker-icon.png';
+import shadowUrl from 'leaflet/dist/images/marker-shadow.png';
+
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: iconRetinaUrl.src,
+  iconUrl: iconUrl.src,
+  shadowUrl: shadowUrl.src,
+});
 
 interface MapViewAndDirectionsProps {
   routeResult: OptimizedRouteResult;
 }
 
+const pickupIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
+
+const deliveryIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
+
+const FitBoundsToMarkers = ({ orders }: { orders: Order[] }) => {
+  const map = useMap();
+  React.useEffect(() => {
+    if (orders.length > 0) {
+      const bounds = new L.LatLngBounds();
+      orders.forEach(order => {
+        bounds.extend([order.pickupCoordinates.lat, order.pickupCoordinates.lng]);
+        bounds.extend([order.deliveryCoordinates.lat, order.deliveryCoordinates.lng]);
+      });
+      if (bounds.isValid()) {
+        map.fitBounds(bounds, { padding: [50, 50] });
+      } else if (orders[0]) {
+         map.setView([orders[0].pickupCoordinates.lat, orders[0].pickupCoordinates.lng], 13);
+      }
+    }
+  }, [orders, map]);
+  return null;
+};
+
+
 export function MapViewAndDirections({ routeResult }: MapViewAndDirectionsProps) {
-  if (!routeResult || !routeResult.directions || routeResult.directions.length === 0) {
+  if (!routeResult) {
     return null;
   }
+  
+  const { ordersInRoute, directions } = routeResult;
+
+  if (!ordersInRoute || ordersInRoute.length === 0) {
+    return (
+      <Card className="shadow-lg w-full mt-6">
+        <CardHeader>
+          <CardTitle className="font-headline text-xl flex items-center">
+            <MapIcon className="mr-2 h-6 w-6 text-primary" />
+            Route Map & Directions
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p>No orders in the route to display on the map.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const defaultPosition: LatLngExpression = [ordersInRoute[0].pickupCoordinates.lat, ordersInRoute[0].pickupCoordinates.lng];
+  
+  const polylinePositions: LatLngExpression[] = [];
+  ordersInRoute.forEach(order => {
+    polylinePositions.push([order.pickupCoordinates.lat, order.pickupCoordinates.lng]);
+    polylinePositions.push([order.deliveryCoordinates.lat, order.deliveryCoordinates.lng]);
+  });
+
 
   return (
     <Card className="shadow-lg w-full mt-6">
@@ -24,44 +104,72 @@ export function MapViewAndDirections({ routeResult }: MapViewAndDirectionsProps)
           <MapIcon className="mr-2 h-6 w-6 text-primary" />
           Route Map & Directions
         </CardTitle>
-        <CardDescription>
-          Visual overview of the route and step-by-step directions.
-        </CardDescription>
+        {directions && directions.length > 0 && (
+          <CardDescription>
+            Visual overview of the route and step-by-step directions.
+          </CardDescription>
+        )}
       </CardHeader>
       <CardContent className="space-y-6">
         <div>
           <h3 className="text-lg font-medium font-headline mb-2 flex items-center">
+             <Navigation className="mr-2 h-5 w-5 text-primary" />
             Map Overview
           </h3>
-          <div className="rounded-md overflow-hidden border">
-            <Image
-              src="https://placehold.co/600x400.png"
-              alt="Route map placeholder"
-              width={600}
-              height={400}
-              className="w-full h-auto"
-              data-ai-hint="route map"
-            />
+          <div className="rounded-md overflow-hidden border h-96 w-full">
+            <MapContainer center={defaultPosition} zoom={13} scrollWheelZoom={true} style={{ height: "100%", width: "100%" }}>
+              <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+              {ordersInRoute.map((order, index) => (
+                <React.Fragment key={order.orderId}>
+                  <Marker 
+                    position={[order.pickupCoordinates.lat, order.pickupCoordinates.lng]}
+                    icon={pickupIcon}
+                  >
+                    <Popup>
+                      <strong>Pickup: Order {order.orderId}</strong><br />
+                      {order.customerName}<br />
+                      {order.pickupAddress}
+                    </Popup>
+                  </Marker>
+                  <Marker 
+                    position={[order.deliveryCoordinates.lat, order.deliveryCoordinates.lng]}
+                    icon={deliveryIcon}
+                  >
+                    <Popup>
+                      <strong>Delivery: Order {order.orderId}</strong><br />
+                      {order.customerName}<br />
+                      {order.deliveryAddress}
+                    </Popup>
+                  </Marker>
+                </React.Fragment>
+              ))}
+              {polylinePositions.length > 1 && <Polyline positions={polylinePositions} color="teal" weight={3} />}
+              <FitBoundsToMarkers orders={ordersInRoute} />
+            </MapContainer>
           </div>
-          <p className="text-xs text-muted-foreground mt-1 text-center">Note: This is a placeholder map.</p>
         </div>
 
-        <div>
-          <h3 className="text-lg font-medium font-headline mb-2 flex items-center">
-            <ListOrderedIcon className="mr-2 h-5 w-5 text-primary" />
-            Directions
-          </h3>
-          <ScrollArea className="h-60 w-full rounded-md border p-4 bg-muted/50">
-            <ol className="list-none space-y-2 text-sm">
-              {routeResult.directions.map((direction, index) => (
-                <li key={index} className="flex items-start">
-                  <span className="mr-2 text-primary font-semibold">{index + 1}.</span>
-                  <span>{direction.replace(/^Step \d+: /, '')}</span>
-                </li>
-              ))}
-            </ol>
-          </ScrollArea>
-        </div>
+        {directions && directions.length > 0 && (
+          <div>
+            <h3 className="text-lg font-medium font-headline mb-2 flex items-center">
+              <ListOrderedIcon className="mr-2 h-5 w-5 text-primary" />
+              Directions
+            </h3>
+            <ScrollArea className="h-60 w-full rounded-md border p-4 bg-muted/50">
+              <ol className="list-none space-y-2 text-sm">
+                {directions.map((direction, index) => (
+                  <li key={index} className="flex items-start">
+                    <span className="mr-2 text-primary font-semibold">{index + 1}.</span>
+                    <span>{direction.replace(/^Step \d+: /, '')}</span>
+                  </li>
+                ))}
+              </ol>
+            </ScrollArea>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

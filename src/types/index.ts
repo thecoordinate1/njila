@@ -6,6 +6,8 @@ export interface Order {
   deliveryAddress: string;
   customerName: string;
   items: string[];
+  pickupCoordinates: { lat: number; lng: number };
+  deliveryCoordinates: { lat: number; lng: number };
 }
 
 export type VehicleType = 'car' | 'bike';
@@ -16,7 +18,7 @@ export type OptimizeDeliveryRouteOutput = {
   optimizedRoute: string[];
   totalDistance: number;
   totalTime: number;
-  directions: string[]; // Added directions
+  directions: string[];
 };
 
 export type OptimizedRouteResult = OptimizeDeliveryRouteOutput & {

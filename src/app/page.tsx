@@ -2,12 +2,11 @@
 // src/app/page.tsx
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import type { Order, VehicleType, OrderStatus, OptimizedRouteResult } from "@/types";
 import { OrderList } from "@/components/otw/OrderList";
 import { RouteOptimizationForm } from "@/components/otw/RouteOptimizationForm";
 import { OptimizedRouteDisplay } from "@/components/otw/OptimizedRouteDisplay";
-import { MapViewAndDirections } from "@/components/otw/MapViewAndDirections"; // Added import
 import { handleOptimizeDeliveryRoute } from "@/lib/actions";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -16,13 +15,20 @@ import { Separator } from '@/components/ui/separator';
 import { Card, CardContent } from "@/components/ui/card";
 import { RefreshCw, ListChecks, RouteIcon as RouteIconLucide } from 'lucide-react';
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
+
+const MapViewAndDirections = dynamic(() =>
+  import('@/components/otw/MapViewAndDirections').then(mod => mod.MapViewAndDirections),
+  { ssr: false, loading: () => <p>Loading map...</p> }
+);
+
 
 const mockOrders: Order[] = [
-  { orderId: "ORD001", pickupAddress: "123 Main St, Anytown, USA", deliveryAddress: "456 Oak Ave, Anytown, USA", customerName: "Alice Smith", items: ["Pizza", "Soda"] },
-  { orderId: "ORD002", pickupAddress: "789 Pine Ln, Anytown, USA", deliveryAddress: "101 Maple Dr, Anytown, USA", customerName: "Bob Johnson", items: ["Groceries"] },
-  { orderId: "ORD003", pickupAddress: "234 Birch Rd, Anytown, USA", deliveryAddress: "567 Cedar Cres, Anytown, USA", customerName: "Carol Williams", items: ["Documents"] },
-  { orderId: "ORD004", pickupAddress: "890 Elm St, Anytown, USA", deliveryAddress: "112 Willow Way, Anytown, USA", customerName: "David Brown", items: ["Flowers", "Chocolates"] },
-  { orderId: "ORD005", pickupAddress: "321 Spruce Ave, Anytown, USA", deliveryAddress: "654 Aspen Ct, Anytown, USA", customerName: "Eve Davis", items: ["Electronics"] },
+  { orderId: "ORD001", pickupAddress: "123 Main St, Anytown, USA", deliveryAddress: "456 Oak Ave, Anytown, USA", customerName: "Alice Smith", items: ["Pizza", "Soda"], pickupCoordinates: { lat: 34.0522, lng: -118.2437 }, deliveryCoordinates: { lat: 34.0530, lng: -118.2445 } },
+  { orderId: "ORD002", pickupAddress: "789 Pine Ln, Anytown, USA", deliveryAddress: "101 Maple Dr, Anytown, USA", customerName: "Bob Johnson", items: ["Groceries"], pickupCoordinates: { lat: 34.0540, lng: -118.2450 }, deliveryCoordinates: { lat: 34.0550, lng: -118.2460 } },
+  { orderId: "ORD003", pickupAddress: "234 Birch Rd, Anytown, USA", deliveryAddress: "567 Cedar Cres, Anytown, USA", customerName: "Carol Williams", items: ["Documents"], pickupCoordinates: { lat: 34.0560, lng: -118.2470 }, deliveryCoordinates: { lat: 34.0570, lng: -118.2480 } },
+  { orderId: "ORD004", pickupAddress: "890 Elm St, Anytown, USA", deliveryAddress: "112 Willow Way, Anytown, USA", customerName: "David Brown", items: ["Flowers", "Chocolates"], pickupCoordinates: { lat: 34.0580, lng: -118.2490 }, deliveryCoordinates: { lat: 34.0590, lng: -118.2500 } },
+  { orderId: "ORD005", pickupAddress: "321 Spruce Ave, Anytown, USA", deliveryAddress: "654 Aspen Ct, Anytown, USA", customerName: "Eve Davis", items: ["Electronics"], pickupCoordinates: { lat: 34.0600, lng: -118.2510 }, deliveryCoordinates: { lat: 34.0610, lng: -118.2520 } },
 ];
 
 export default function Home() {
@@ -42,8 +48,12 @@ export default function Home() {
       initialStatuses[order.orderId] = 'Pending';
     });
     setOrderStatuses(initialStatuses);
+  }, []);
+
+  useEffect(() => {
     setCurrentYear(new Date().getFullYear());
   }, []);
+
 
   const handleSelectOrder = (orderId: string, isSelected: boolean) => {
     setSelectedOrderIds(prev =>
@@ -60,7 +70,7 @@ export default function Home() {
     setOptimizedRouteResult(null); 
 
     const ordersToOptimize = availableOrders.filter(order => selectedOrderIds.includes(order.orderId))
-      .map(({ orderId, pickupAddress, deliveryAddress }) => ({ orderId, pickupAddress, deliveryAddress }));
+      .map(({ orderId, pickupAddress, deliveryAddress, pickupCoordinates, deliveryCoordinates }) => ({ orderId, pickupAddress, deliveryAddress, pickupCoordinates, deliveryCoordinates }));
 
     const result = await handleOptimizeDeliveryRoute(ordersToOptimize, vehicleType);
     setIsLoading(false);
@@ -80,7 +90,7 @@ export default function Home() {
 
   const handleUpdateStatus = (orderId: string, status: OrderStatus) => {
     setOrderStatuses(prev => ({ ...prev, [orderId]: status }));
-    toast({ title: "Status Updated", description: `Order ${orderId} status changed to ${status}.` });
+    // No toast for status updates per user request in previous turns
   };
   
   const handleReset = () => {
@@ -149,7 +159,9 @@ export default function Home() {
                 orderStatuses={orderStatuses}
                 onUpdateStatus={handleUpdateStatus}
               />
-              <MapViewAndDirections routeResult={optimizedRouteResult} />
+              <Suspense fallback={<p>Loading map and directions...</p>}>
+                <MapViewAndDirections routeResult={optimizedRouteResult} />
+              </Suspense>
             </>
           )}
            {!optimizedRouteResult && !isLoading && (
