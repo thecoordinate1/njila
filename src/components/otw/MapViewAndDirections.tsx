@@ -1,7 +1,7 @@
 // src/components/otw/MapViewAndDirections.tsx
 "use client";
 
-import * as React from 'react';
+import React from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
 import L, { LatLngExpression } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -64,9 +64,8 @@ const FitBoundsToMarkers = ({ orders }: { orders: Order[] }) => {
 
       if (validCoordsExist && bounds.isValid()) {
         map.fitBounds(bounds, { padding: [50, 50] });
-      } else if (orders[0]?.pickupCoordinates && typeof orders[0].pickupCoordinates.lat === 'number' && typeof orders[0].pickupCoordinates.lng === 'number') {
-         map.setView([orders[0].pickupCoordinates.lat, orders[0].pickupCoordinates.lng], 13);
       }
+      // Removed the else-if map.setView fallback, MapContainer's center prop should handle initial view.
     }
   }, [orders, map]);
   return null;
@@ -96,11 +95,15 @@ export function MapViewAndDirections({ routeResult }: MapViewAndDirectionsProps)
     );
   }
 
-  const firstOrderWithPickupCoords = ordersInRoute.find(order => order.pickupCoordinates && typeof order.pickupCoordinates.lat === 'number' && typeof order.pickupCoordinates.lng === 'number');
+  const firstOrderWithPickupCoords = ordersInRoute.find(order => 
+    order.pickupCoordinates && 
+    typeof order.pickupCoordinates.lat === 'number' && 
+    typeof order.pickupCoordinates.lng === 'number'
+  );
   
   const defaultPosition: LatLngExpression = firstOrderWithPickupCoords 
     ? [firstOrderWithPickupCoords.pickupCoordinates.lat, firstOrderWithPickupCoords.pickupCoordinates.lng]
-    : [34.0522, -118.2437]; // Fallback default position
+    : [34.0522, -118.2437]; // Fallback default position (e.g., Los Angeles)
   
   const polylinePositions: LatLngExpression[] = [];
   ordersInRoute.forEach(order => {
@@ -112,9 +115,11 @@ export function MapViewAndDirections({ routeResult }: MapViewAndDirectionsProps)
     }
   });
 
-  const mapKey = React.useMemo(() => 
-    ordersInRoute.map(o => o.orderId).join('-') + (ordersInRoute[0]?.pickupCoordinates?.lat || ''), // Add a coordinate to ensure key changes if data changes subtly
-    [ordersInRoute]
+  const mapContainerKey = React.useMemo(() => 
+    ordersInRoute.map(o => o.orderId).join('-') + 
+    (firstOrderWithPickupCoords?.pickupCoordinates?.lat || 'defaultLat') +
+    (firstOrderWithPickupCoords?.pickupCoordinates?.lng || 'defaultLng'),
+    [ordersInRoute, firstOrderWithPickupCoords]
   );
 
 
@@ -125,7 +130,7 @@ export function MapViewAndDirections({ routeResult }: MapViewAndDirectionsProps)
           <MapIcon className="mr-2 h-6 w-6 text-primary" />
           Route Map & Directions
         </CardTitle>
-        {directions && directions.length > 0 && (
+        {(directions && directions.length > 0) && (
           <CardDescription>
             Visual overview of the route and step-by-step directions.
           </CardDescription>
@@ -138,7 +143,7 @@ export function MapViewAndDirections({ routeResult }: MapViewAndDirectionsProps)
             Map Overview
           </h3>
           <div className="rounded-md overflow-hidden border h-96 w-full">
-            <MapContainer key={mapKey} center={defaultPosition} zoom={13} scrollWheelZoom={true} style={{ height: "100%", width: "100%" }}>
+            <MapContainer key={mapContainerKey} center={defaultPosition} zoom={13} scrollWheelZoom={true} style={{ height: "100%", width: "100%" }}>
               <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -177,7 +182,7 @@ export function MapViewAndDirections({ routeResult }: MapViewAndDirectionsProps)
           </div>
         </div>
 
-        {directions && directions.length > 0 && (
+        {(directions && directions.length > 0) && (
           <div>
             <h3 className="text-lg font-medium font-headline mb-2 flex items-center">
               <ListOrderedIcon className="mr-2 h-5 w-5 text-primary" />
@@ -199,3 +204,4 @@ export function MapViewAndDirections({ routeResult }: MapViewAndDirectionsProps)
     </Card>
   );
 }
+

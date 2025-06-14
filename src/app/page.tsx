@@ -70,7 +70,7 @@ export default function Home() {
     setOptimizedRouteResult(null); 
 
     const ordersToOptimize = availableOrders.filter(order => selectedOrderIds.includes(order.orderId))
-      .map(({ orderId, pickupAddress, deliveryAddress, pickupCoordinates, deliveryCoordinates }) => ({ orderId, pickupAddress, deliveryAddress, pickupCoordinates, deliveryCoordinates }));
+      .map(({ orderId, pickupAddress, deliveryAddress, customerName, items, pickupCoordinates, deliveryCoordinates }) => ({ orderId, pickupAddress, deliveryAddress, customerName, items, pickupCoordinates, deliveryCoordinates }));
 
     const result = await handleOptimizeDeliveryRoute(ordersToOptimize, vehicleType);
     setIsLoading(false);
@@ -90,7 +90,6 @@ export default function Home() {
 
   const handleUpdateStatus = (orderId: string, status: OrderStatus) => {
     setOrderStatuses(prev => ({ ...prev, [orderId]: status }));
-    // No toast for status updates per user request in previous turns
   };
   
   const handleReset = () => {
@@ -104,6 +103,8 @@ export default function Home() {
     setOrderStatuses(initialStatuses);
     toast({ title: "Selection Reset", description: "Selections and optimized route have been cleared." });
   };
+
+  const mapViewKey = optimizedRouteResult ? optimizedRouteResult.optimizedRoute.join('-') : 'no-route';
 
   return (
     <div className="min-h-screen flex flex-col items-center p-4 md:p-8 bg-light-teal font-body">
@@ -160,7 +161,7 @@ export default function Home() {
                 onUpdateStatus={handleUpdateStatus}
               />
               <Suspense fallback={<p>Loading map and directions...</p>}>
-                <MapViewAndDirections routeResult={optimizedRouteResult} />
+                <MapViewAndDirections key={mapViewKey} routeResult={optimizedRouteResult} />
               </Suspense>
             </>
           )}
