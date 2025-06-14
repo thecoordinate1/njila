@@ -1,3 +1,4 @@
+
 // src/app/page.tsx
 "use client";
 
@@ -11,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from '@/components/ui/separator';
-import { Card, CardContent } from "@/components/ui/card"; // Added Card and CardContent import
+import { Card, CardContent } from "@/components/ui/card";
 import { RefreshCw, ListChecks, RouteIcon as RouteIconLucide } from 'lucide-react';
 import Image from 'next/image';
 
@@ -31,6 +32,7 @@ export default function Home() {
   const [orderStatuses, setOrderStatuses] = useState<Record<string, OrderStatus>>({});
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const [currentYear, setCurrentYear] = useState<number | null>(null);
 
   useEffect(() => {
     // Simulate fetching orders
@@ -40,6 +42,7 @@ export default function Home() {
       initialStatuses[order.orderId] = 'Pending';
     });
     setOrderStatuses(initialStatuses);
+    setCurrentYear(new Date().getFullYear());
   }, []);
 
   const handleSelectOrder = (orderId: string, isSelected: boolean) => {
@@ -161,7 +164,9 @@ export default function Home() {
         </section>
       </main>
       <footer className="w-full max-w-6xl mt-12 pt-8 border-t border-gray-300 text-center">
-        <p className="text-sm text-muted-foreground">&copy; {new Date().getFullYear()} OTW App. Drive smart, deliver fast.</p>
+        <p className="text-sm text-muted-foreground">
+          {currentYear !== null ? `© ${currentYear} OTW App. Drive smart, deliver fast.` : 'Loading year...'}
+        </p>
       </footer>
     </div>
   );
