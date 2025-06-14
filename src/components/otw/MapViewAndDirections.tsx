@@ -3,7 +3,7 @@
 
 import * as React from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
-import L, { LatLngExpression, LatLngBounds } from 'leaflet';
+import L, { LatLngExpression } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { OptimizedRouteResult, Order } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -96,6 +96,11 @@ export function MapViewAndDirections({ routeResult }: MapViewAndDirectionsProps)
     polylinePositions.push([order.deliveryCoordinates.lat, order.deliveryCoordinates.lng]);
   });
 
+  const mapKey = React.useMemo(() => 
+    ordersInRoute.map(o => o.orderId).join('-'),
+    [ordersInRoute]
+  );
+
 
   return (
     <Card className="shadow-lg w-full mt-6">
@@ -117,12 +122,12 @@ export function MapViewAndDirections({ routeResult }: MapViewAndDirectionsProps)
             Map Overview
           </h3>
           <div className="rounded-md overflow-hidden border h-96 w-full">
-            <MapContainer center={defaultPosition} zoom={13} scrollWheelZoom={true} style={{ height: "100%", width: "100%" }}>
+            <MapContainer key={mapKey} center={defaultPosition} zoom={13} scrollWheelZoom={true} style={{ height: "100%", width: "100%" }}>
               <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
-              {ordersInRoute.map((order, index) => (
+              {ordersInRoute.map((order) => (
                 <React.Fragment key={order.orderId}>
                   <Marker 
                     position={[order.pickupCoordinates.lat, order.pickupCoordinates.lng]}
