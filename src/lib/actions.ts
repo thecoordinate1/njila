@@ -1,8 +1,7 @@
 // src/lib/actions.ts
 "use server";
 
-import { optimizeDeliveryRoute, type OptimizeDeliveryRouteInput, type OptimizeDeliveryRouteOutput } from "@/ai/flows/optimize-delivery-route";
-import type { Order } from "@/types";
+import type { Order, OptimizeDeliveryRouteOutput } from "@/types";
 
 interface OptimizeRouteActionResult {
   success: boolean;
@@ -12,38 +11,27 @@ interface OptimizeRouteActionResult {
 
 export async function handleOptimizeDeliveryRoute(
   orders: Pick<Order, 'orderId' | 'pickupAddress' | 'deliveryAddress'>[],
-  vehicleType: 'car' | 'bike'
+  vehicleType: 'car' | 'bike' // vehicleType is kept as it's part of the form, though not used in this mock
 ): Promise<OptimizeRouteActionResult> {
   if (!orders || orders.length === 0) {
     return { success: false, error: "No orders provided for optimization." };
   }
 
-  const input: OptimizeDeliveryRouteInput = {
-    orders: orders.map(order => ({
-      orderId: order.orderId,
-      pickupAddress: order.pickupAddress,
-      deliveryAddress: order.deliveryAddress,
-    })),
-    vehicleType,
+  // Mocked optimization: returns orders in the sequence they were selected.
+  // VehicleType is ignored in this mock implementation.
+  const mockOptimizedRoute: string[] = orders.map(order => order.orderId);
+  // Assign arbitrary values for distance and time for demonstration
+  const mockTotalDistance = orders.length * 5.0; // e.g., 5 km per order
+  const mockTotalTime = orders.length * 15; // e.g., 15 minutes per order
+
+  const mockData: OptimizeDeliveryRouteOutput = {
+    optimizedRoute: mockOptimizedRoute,
+    totalDistance: mockTotalDistance,
+    totalTime: mockTotalTime,
   };
 
-  try {
-    const result = await optimizeDeliveryRoute(input);
-    if (!result || !result.optimizedRoute || result.optimizedRoute.length === 0) {
-        // Check if all input orders are present in the optimized route
-        const allOrdersIncluded = orders.every(o => result.optimizedRoute.includes(o.orderId));
-        if (!allOrdersIncluded && orders.length > 0) { // Ensure there were orders to begin with
-             console.warn("AI did not include all orders in the optimized route. This might be a model limitation or a too-complex request for the current prompt.");
-             // Potentially return a partial success or a specific error message.
-             // For now, let's allow it but log a warning.
-        } else if (result.optimizedRoute.length === 0 && orders.length > 0) {
-            return { success: false, error: "AI returned an empty route. Please try again." };
-        }
-    }
-    return { success: true, data: result };
-  } catch (e) {
-    console.error("Error optimizing delivery route:", e);
-    const errorMessage = e instanceof Error ? e.message : "An unknown error occurred during route optimization.";
-    return { success: false, error: errorMessage };
-  }
+  // Simulate a short delay, as an API call (even a mocked one) might take some time
+  await new Promise(resolve => setTimeout(resolve, 500)); 
+
+  return { success: true, data: mockData };
 }

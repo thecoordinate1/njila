@@ -1,4 +1,4 @@
-import type { OptimizeDeliveryRouteOutput } from '@/ai/flows/optimize-delivery-route';
+// import type { OptimizeDeliveryRouteOutput } from '@/ai/flows/optimize-delivery-route'; // Removed AI import
 
 export interface Order {
   orderId: string;
@@ -11,6 +11,13 @@ export interface Order {
 export type VehicleType = 'car' | 'bike';
 
 export type OrderStatus = 'Pending' | 'Picked Up' | 'In Transit' | 'Delivered' | 'Failed';
+
+// Define OptimizeDeliveryRouteOutput directly as the AI flow file is removed
+export type OptimizeDeliveryRouteOutput = {
+  optimizedRoute: string[];
+  totalDistance: number;
+  totalTime: number;
+};
 
 export type OptimizedRouteResult = OptimizeDeliveryRouteOutput & {
   ordersInRoute: Order[]; // To easily access full order details
