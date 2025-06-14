@@ -1,6 +1,7 @@
 // src/components/otw/OptimizedRouteDisplay.tsx
 "use client";
 
+import * as React from 'react';
 import type { OptimizedRouteResult, Order, OrderStatus } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
