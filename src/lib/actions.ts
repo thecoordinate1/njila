@@ -18,19 +18,29 @@ export async function handleOptimizeDeliveryRoute(
   }
 
   // Mocked optimization: returns orders in the sequence they were selected.
-  // VehicleType is ignored in this mock implementation.
   const mockOptimizedRoute: string[] = orders.map(order => order.orderId);
-  // Assign arbitrary values for distance and time for demonstration
   const mockTotalDistance = orders.length * 5.0; // e.g., 5 km per order
   const mockTotalTime = orders.length * 15; // e.g., 15 minutes per order
+
+  const mockDirections: string[] = [];
+  const ordersMap = new Map(orders.map(o => [o.orderId, o]));
+
+  mockOptimizedRoute.forEach((orderId, index) => {
+    const order = ordersMap.get(orderId);
+    if (order) {
+      mockDirections.push(`Step ${mockDirections.length + 1}: Pick up order ${order.orderId} at "${order.pickupAddress}".`);
+      mockDirections.push(`Step ${mockDirections.length + 1}: Deliver order ${order.orderId} to "${order.deliveryAddress}".`);
+    }
+  });
 
   const mockData: OptimizeDeliveryRouteOutput = {
     optimizedRoute: mockOptimizedRoute,
     totalDistance: mockTotalDistance,
     totalTime: mockTotalTime,
+    directions: mockDirections,
   };
 
-  // Simulate a short delay, as an API call (even a mocked one) might take some time
+  // Simulate a short delay
   await new Promise(resolve => setTimeout(resolve, 500)); 
 
   return { success: true, data: mockData };

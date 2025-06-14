@@ -7,6 +7,7 @@ import type { Order, VehicleType, OrderStatus, OptimizedRouteResult } from "@/ty
 import { OrderList } from "@/components/otw/OrderList";
 import { RouteOptimizationForm } from "@/components/otw/RouteOptimizationForm";
 import { OptimizedRouteDisplay } from "@/components/otw/OptimizedRouteDisplay";
+import { MapViewAndDirections } from "@/components/otw/MapViewAndDirections"; // Added import
 import { handleOptimizeDeliveryRoute } from "@/lib/actions";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -35,7 +36,6 @@ export default function Home() {
   const [currentYear, setCurrentYear] = useState<number | null>(null);
 
   useEffect(() => {
-    // Simulate fetching orders
     setAvailableOrders(mockOrders);
     const initialStatuses: Record<string, OrderStatus> = {};
     mockOrders.forEach(order => {
@@ -57,7 +57,7 @@ export default function Home() {
       return;
     }
     setIsLoading(true);
-    setOptimizedRouteResult(null); // Clear previous results
+    setOptimizedRouteResult(null); 
 
     const ordersToOptimize = availableOrders.filter(order => selectedOrderIds.includes(order.orderId))
       .map(({ orderId, pickupAddress, deliveryAddress }) => ({ orderId, pickupAddress, deliveryAddress }));
@@ -80,7 +80,6 @@ export default function Home() {
 
   const handleUpdateStatus = (orderId: string, status: OrderStatus) => {
     setOrderStatuses(prev => ({ ...prev, [orderId]: status }));
-    // Here you might want to make an API call to persist the status change
     toast({ title: "Status Updated", description: `Order ${orderId} status changed to ${status}.` });
   };
   
@@ -144,11 +143,14 @@ export default function Home() {
             selectedOrderCount={selectedOrderIds.length}
           />
           {optimizedRouteResult && (
-            <OptimizedRouteDisplay
-              routeResult={optimizedRouteResult}
-              orderStatuses={orderStatuses}
-              onUpdateStatus={handleUpdateStatus}
-            />
+            <>
+              <OptimizedRouteDisplay
+                routeResult={optimizedRouteResult}
+                orderStatuses={orderStatuses}
+                onUpdateStatus={handleUpdateStatus}
+              />
+              <MapViewAndDirections routeResult={optimizedRouteResult} />
+            </>
           )}
            {!optimizedRouteResult && !isLoading && (
             <Card className="shadow-lg border-dashed border-2 border-gray-300">
