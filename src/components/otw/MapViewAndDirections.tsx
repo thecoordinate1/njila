@@ -4,12 +4,12 @@
 
 import React from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
-import L, { LatLngExpression } from 'leaflet';
+import L, { type LatLngExpression } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { OptimizedRouteResult, Order } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { MapIcon, ListOrdered as ListOrderedIcon,Navigation } from "lucide-react";
+import { MapIcon, ListOrdered as ListOrderedIcon, Navigation } from "lucide-react";
 
 // Fix for default Leaflet marker icons not appearing correctly with Webpack
 import iconRetinaUrl from 'leaflet/dist/images/marker-icon-2x.png';
@@ -63,6 +63,13 @@ const FitBoundsToMarkers = ({ orders }: { orders: Order[] }) => {
         map.fitBounds(bounds, { padding: [50, 50] });
       }
     }
+    return () => {
+      // No specific cleanup needed for map.fitBounds() itself,
+      // as it's a one-time view adjustment.
+      // If this effect were to add layers or event listeners directly to the map instance
+      // (outside of react-leaflet's declarative components),
+      // they would be cleaned up here (e.g., map.off(), map.removeLayer()).
+    };
   }, [orders, map]);
   return null;
 };
@@ -72,18 +79,12 @@ interface MapViewAndDirectionsProps {
 }
 
 export function MapViewAndDirections({ routeResult }: MapViewAndDirectionsProps) {
-  // The key on MapViewAndDirections in page.tsx (`mapViewKey`) forces
-  // this component to re-mount when `optimizedRouteResult` itself changes.
-  // This is the primary mechanism for ensuring a clean map state.
-
   if (!routeResult) {
-    return null; // Should not happen if parent keying and conditional rendering is correct
+    return null;
   }
   
   const { ordersInRoute, directions } = routeResult;
 
-  // Key for the MapContainer itself. Changes if the orders in the route change.
-  // This is a secondary measure.
   const mapContainerKey = React.useMemo(() => {
     if (!ordersInRoute || ordersInRoute.length === 0) {
       return 'map-container-no-orders';
@@ -91,7 +92,6 @@ export function MapViewAndDirections({ routeResult }: MapViewAndDirectionsProps)
     return `map-container-${ordersInRoute.map(o => o.orderId).join('-')}`;
   }, [ordersInRoute]);
   
-  // Calculate default position for the map center.
   const defaultPosition = React.useMemo<LatLngExpression>(() => {
     const firstOrderWithPickupCoords = ordersInRoute?.find(order => 
       order.pickupCoordinates && 
@@ -101,10 +101,9 @@ export function MapViewAndDirections({ routeResult }: MapViewAndDirectionsProps)
     
     return firstOrderWithPickupCoords 
       ? [firstOrderWithPickupCoords.pickupCoordinates.lat, firstOrderWithPickupCoords.pickupCoordinates.lng]
-      : [34.0522, -118.2437]; // Fallback default (e.g., Los Angeles)
+      : [34.0522, -118.2437]; 
   }, [ordersInRoute]);
 
-  // If there are no orders to display on the map, show a message instead of rendering MapContainer.
   if (!ordersInRoute || ordersInRoute.length === 0) {
     return (
       <Card className="shadow-lg w-full mt-6">
@@ -213,3 +212,4 @@ export function MapViewAndDirections({ routeResult }: MapViewAndDirectionsProps)
     </Card>
   );
 }
+
