@@ -64,11 +64,11 @@ const FitBoundsToMarkers = ({ orders }: { orders: Order[] }) => {
       }
     }
     return () => {
-      // No specific cleanup needed for map.fitBounds() itself,
-      // as it's a one-time view adjustment.
+      // Cleanup for FitBoundsToMarkers
       // If this effect were to add layers or event listeners directly to the map instance
       // (outside of react-leaflet's declarative components),
       // they would be cleaned up here (e.g., map.off(), map.removeLayer()).
+      // map.fitBounds() itself does not require specific cleanup for this simple case.
     };
   }, [orders, map]);
   return null;
@@ -79,6 +79,7 @@ interface MapViewAndDirectionsProps {
 }
 
 export function MapViewAndDirections({ routeResult }: MapViewAndDirectionsProps) {
+  console.log('MapViewAndDirections rendered');
   if (!routeResult) {
     return null;
   }
@@ -101,7 +102,7 @@ export function MapViewAndDirections({ routeResult }: MapViewAndDirectionsProps)
     
     return firstOrderWithPickupCoords 
       ? [firstOrderWithPickupCoords.pickupCoordinates.lat, firstOrderWithPickupCoords.pickupCoordinates.lng]
-      : [34.0522, -118.2437]; 
+      : [34.0522, -118.2437]; // Default to a general location if no valid coords
   }, [ordersInRoute]);
 
   if (!ordersInRoute || ordersInRoute.length === 0) {
@@ -212,4 +213,3 @@ export function MapViewAndDirections({ routeResult }: MapViewAndDirectionsProps)
     </Card>
   );
 }
-

@@ -32,6 +32,7 @@ const mockOrders: Order[] = [
 ];
 
 export default function Home() {
+  console.log('Home component (page.tsx) rendered');
   const [availableOrders, setAvailableOrders] = useState<Order[]>([]);
   const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
   const [vehicleType, setVehicleType] = useState<VehicleType>('car');
