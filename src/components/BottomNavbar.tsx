@@ -2,7 +2,7 @@
 'use client';
 
 import type React from 'react';
-import { HomeIcon, MapPinIcon, SettingsIcon } from 'lucide-react';
+import { HomeIcon, MapPinIcon, SettingsIcon, ListChecksIcon, UserIcon } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 
@@ -28,6 +28,14 @@ const BottomNavbar: React.FC = () => {
         <Link href="#" className={navItemClasses('/map')}> {/* Assuming map might be a different page or section */}
           <MapPinIcon className="w-6 h-6 mb-0.5" />
           <span className="text-xs">Map</span>
+        </Link>
+        <Link href="#" className={navItemClasses('/orders')}>
+          <ListChecksIcon className="w-6 h-6 mb-0.5" />
+          <span className="text-xs">Orders</span>
+        </Link>
+        <Link href="#" className={navItemClasses('/profile')}>
+          <UserIcon className="w-6 h-6 mb-0.5" />
+          <span className="text-xs">Profile</span>
         </Link>
         <Link href="#" className={navItemClasses('/settings')}>
           <SettingsIcon className="w-6 h-6 mb-0.5" />
