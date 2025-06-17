@@ -6,7 +6,7 @@ import type { NextPage } from 'next';
 import BottomNavbar from '@/components/BottomNavbar';
 
 const MapDisplay = dynamic(() => import('@/components/MapDisplay'), {
-  ssr: false, // Leaflet needs window object, so disable SSR for this component
+  ssr: false, 
 });
 
 const Home: NextPage = () => {
