@@ -8,20 +8,25 @@ import { cn } from '@/lib/utils';
 
 const BottomNavbar: React.FC = () => {
   // Example active route - in a real app, this would come from useRouter or similar
-  const activeRoute = '/map'; // Adjusted example as Home is removed, making "Map" active
+  const activeRoute = '/map';
 
   const navItemClasses = (path: string) =>
     cn(
-      "flex flex-col items-center justify-center h-full px-2 text-primary-foreground transition-all duration-200 ease-in-out rounded-md", // Added rounded-md for background styling
+      "flex-1", // Each item takes up equal width
+      "flex flex-col items-center justify-center", // Center content within the section
+      "h-full", // Ensure the link fills the height of the navbar
+      "text-primary-foreground", // Base text color for icons and text
+      "transition-all duration-200 ease-in-out", // Smooth transitions for opacity and background
+      // No rounded-md here for a flush section highlight
       {
-        "bg-primary-foreground/20 opacity-100": activeRoute === path, // Active items have a background and full opacity
-        "opacity-70 hover:opacity-100": activeRoute !== path, // Inactive items are less opaque, full on hover
+        "bg-primary-foreground/20 opacity-100": activeRoute === path, // Active section has background and full opacity
+        "opacity-70 hover:opacity-100": activeRoute !== path, // Inactive sections are less opaque, full on hover
       }
     );
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 h-16 bg-primary border-t border-primary-foreground/20 shadow-md z-50">
-      <div className="flex justify-around items-stretch h-full">
+      <div className="flex h-full"> {/* Parent flex container for the sections */}
         <Link href="#" className={navItemClasses('/map')}>
           <MapPinIcon className="w-6 h-6 mb-0.5" />
           <span className="text-xs">Map</span>
