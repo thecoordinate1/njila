@@ -2,6 +2,7 @@
 'use client';
 
 import type React from 'react';
+import { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L, { type LatLngExpression } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -21,8 +22,18 @@ L.Icon.Default.mergeOptions({
 
 
 const MapDisplay: React.FC = () => {
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   const position: LatLngExpression = [51.505, -0.09]; // Default position (London)
   const zoomLevel: number = 13;
+
+  if (!isClient) {
+    return null; // Or a loading spinner, etc.
+  }
 
   return (
     <MapContainer
