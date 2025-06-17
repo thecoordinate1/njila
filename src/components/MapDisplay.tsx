@@ -1,3 +1,4 @@
+
 'use client';
 
 import type React from 'react';
@@ -24,11 +25,11 @@ const MapDisplay: React.FC = () => {
   const zoomLevel: number = 13;
 
   return (
-    <MapContainer 
+    <MapContainer
       key="leaflet-map-container" // Added a static key
-      center={position} 
-      zoom={zoomLevel} 
-      scrollWheelZoom={true} 
+      center={position}
+      zoom={zoomLevel}
+      scrollWheelZoom={true}
       style={{ height: '100%', width: '100%' }}
     >
       <TileLayer
