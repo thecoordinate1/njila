@@ -10,9 +10,8 @@ const MapDisplay = dynamic(() => import('@/components/MapDisplay'), {
 
 const Home: NextPage = () => {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-4">
-      <h1 className="text-4xl font-bold mb-8 text-center">My Leaflet Map</h1>
-      <div className="w-full max-w-4xl h-[70vh] rounded-lg shadow-xl overflow-hidden border">
+    <main className="min-h-screen flex flex-col">
+      <div className="w-screen h-screen">
         <MapDisplay />
       </div>
     </main>
