@@ -8,13 +8,14 @@ import { cn } from '@/lib/utils';
 
 const BottomNavbar: React.FC = () => {
   // Example active route - in a real app, this would come from useRouter or similar
-  const activeRoute = '/map'; // Adjusted example as Home is removed
+  const activeRoute = '/map'; // Adjusted example as Home is removed, making "Map" active
 
   const navItemClasses = (path: string) =>
     cn(
-      "flex flex-col items-center justify-center h-full px-2 text-primary-foreground transition-all duration-200 ease-in-out opacity-70 hover:opacity-100",
+      "flex flex-col items-center justify-center h-full px-2 text-primary-foreground transition-all duration-200 ease-in-out",
       {
         "opacity-100": activeRoute === path, // Active items are full opacity
+        "opacity-70 hover:opacity-100": activeRoute !== path, // Inactive items are less opaque, full on hover
       }
     );
 
