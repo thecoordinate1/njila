@@ -2,30 +2,26 @@
 'use client';
 
 import type React from 'react';
-import { HomeIcon, MapPinIcon, SettingsIcon, ListChecksIcon, UserIcon } from 'lucide-react';
+import { MapPinIcon, SettingsIcon, ListChecksIcon, UserIcon } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 
 const BottomNavbar: React.FC = () => {
   // Example active route - in a real app, this would come from useRouter or similar
-  const activeRoute = '/'; // or '/map', '/settings'
+  const activeRoute = '/map'; // Adjusted example as Home is removed
 
   const navItemClasses = (path: string) =>
     cn(
-      "flex flex-col items-center justify-center h-full px-2 text-muted-foreground hover:text-primary transition-colors",
+      "flex flex-col items-center justify-center h-full px-2 text-primary-foreground transition-all duration-200 ease-in-out opacity-70 hover:opacity-100",
       {
-        "text-primary": activeRoute === path,
+        "opacity-100": activeRoute === path, // Active items are full opacity
       }
     );
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 h-16 bg-background border-t border-border shadow-md z-50">
+    <nav className="fixed bottom-0 left-0 right-0 h-16 bg-primary border-t border-primary-foreground/20 shadow-md z-50">
       <div className="flex justify-around items-stretch h-full">
-        <Link href="/" className={navItemClasses('/')}>
-          <HomeIcon className="w-6 h-6 mb-0.5" />
-          <span className="text-xs">Home</span>
-        </Link>
-        <Link href="#" className={navItemClasses('/map')}> {/* Assuming map might be a different page or section */}
+        <Link href="#" className={navItemClasses('/map')}>
           <MapPinIcon className="w-6 h-6 mb-0.5" />
           <span className="text-xs">Map</span>
         </Link>
