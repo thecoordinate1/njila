@@ -2,7 +2,7 @@
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true, // Re-enable Strict Mode
+  reactStrictMode: false, // Reverted to false for smoother Leaflet integration in dev
   typescript: {
     ignoreBuildErrors: true,
   },
