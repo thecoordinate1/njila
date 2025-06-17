@@ -12,9 +12,9 @@ const BottomNavbar: React.FC = () => {
 
   const navItemClasses = (path: string) =>
     cn(
-      "flex flex-col items-center justify-center h-full px-2 text-primary-foreground transition-all duration-200 ease-in-out",
+      "flex flex-col items-center justify-center h-full px-2 text-primary-foreground transition-all duration-200 ease-in-out rounded-md", // Added rounded-md for background styling
       {
-        "opacity-100": activeRoute === path, // Active items are full opacity
+        "bg-primary-foreground/20 opacity-100": activeRoute === path, // Active items have a background and full opacity
         "opacity-70 hover:opacity-100": activeRoute !== path, // Inactive items are less opaque, full on hover
       }
     );
