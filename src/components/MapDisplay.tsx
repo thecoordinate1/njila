@@ -7,6 +7,8 @@ import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-
 import L, { type LatLngExpression } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import axios from 'axios';
+import { Button } from "@/components/ui/button";
+import { LocateFixedIcon } from 'lucide-react';
 
 // Icon fix
 // @ts-ignore
@@ -31,10 +33,37 @@ const OrderMapViewUpdater: React.FC<{ coords?: MapDisplayProps['orderCoordinates
       const bounds = L.latLngBounds([coords.pickup, coords.destination]);
       map.fitBounds(bounds, { padding: [50, 50] });
     }
-    // Optional: Add logic to reset to a default view if coords become undefined
-    // else { map.setView([51.505, -0.09], 13); }
   }, [map, coords]);
   return null;
+};
+
+const RecenterButton: React.FC<{ 
+  orderCoords?: MapDisplayProps['orderCoordinates']; 
+  defaultPosition: LatLngExpression;
+  defaultZoom: number;
+}> = ({ orderCoords, defaultPosition, defaultZoom }) => {
+  const map = useMap();
+
+  const handleRecenter = () => {
+    if (orderCoords) {
+      const bounds = L.latLngBounds([orderCoords.pickup, orderCoords.destination]);
+      map.fitBounds(bounds, { padding: [50, 50] });
+    } else {
+      map.setView(defaultPosition, defaultZoom);
+    }
+  };
+
+  return (
+    <Button
+      variant="outline"
+      size="icon"
+      className="absolute top-4 right-4 z-[1000] bg-background shadow-md hover:bg-accent"
+      onClick={handleRecenter}
+      title="Recenter Map"
+    >
+      <LocateFixedIcon className="h-5 w-5" />
+    </Button>
+  );
 };
 
 const MapDisplay: React.FC<MapDisplayProps> = ({ orderCoordinates }) => {
@@ -49,21 +78,19 @@ const MapDisplay: React.FC<MapDisplayProps> = ({ orderCoordinates }) => {
 
   useEffect(() => {
     if (orderCoordinates && isClient) {
-      if (YOUR_ORS_API_KEY === 'YOUR_OPENROUTESERVICE_API_KEY_HERE' || YOUR_ORS_API_KEY === '') { // Keep check for placeholder if user empties it
+      if (YOUR_ORS_API_KEY === 'YOUR_OPENROUTESERVICE_API_KEY_HERE' || YOUR_ORS_API_KEY === '') { 
         console.warn(
           'OpenRouteService API key is missing or is still the placeholder. Please add it to MapDisplay.tsx to fetch routes. Falling back to a straight line.'
         );
-        setRoutePoints(null); // Ensure no old route is shown
+        setRoutePoints(null); 
         return;
       }
 
       const fetchRoute = async () => {
         const { pickup, destination } = orderCoordinates;
-        // Ensure coordinates are [lat, lng]
         const pickupCoords = pickup as [number, number];
         const destCoords = destination as [number, number];
 
-        // ORS expects lng,lat
         const start = `${pickupCoords[1]},${pickupCoords[0]}`;
         const end = `${destCoords[1]},${destCoords[0]}`;
         
@@ -73,7 +100,6 @@ const MapDisplay: React.FC<MapDisplayProps> = ({ orderCoordinates }) => {
           const response = await axios.get(url);
           if (response.data && response.data.features && response.data.features.length > 0) {
             const coordinates = response.data.features[0].geometry.coordinates;
-            // ORS coordinates are [lng, lat], map to [lat, lng] for Leaflet
             const leafletCoords: LatLngExpression[] = coordinates.map((coord: [number, number]) => [coord[1], coord[0]] as LatLngExpression);
             setRoutePoints(leafletCoords);
           } else {
@@ -88,7 +114,7 @@ const MapDisplay: React.FC<MapDisplayProps> = ({ orderCoordinates }) => {
 
       fetchRoute();
     } else {
-      setRoutePoints(null); // Clear route if no orderCoordinates or not client-side
+      setRoutePoints(null); 
     }
   }, [orderCoordinates, isClient, YOUR_ORS_API_KEY]);
 
@@ -131,7 +157,6 @@ const MapDisplay: React.FC<MapDisplayProps> = ({ orderCoordinates }) => {
           {routePoints && routePoints.length > 0 ? (
             <Polyline positions={routePoints} color="green" weight={8} opacity={0.7} />
           ) : (
-            // Fallback to straight dashed line if no route points (API key missing, error, or still loading)
             <Polyline positions={[orderCoordinates.pickup, orderCoordinates.destination]} color="gray" dashArray="10, 5" />
           )}
         </>
@@ -142,8 +167,14 @@ const MapDisplay: React.FC<MapDisplayProps> = ({ orderCoordinates }) => {
           </Popup>
         </Marker>
       )}
+      <RecenterButton 
+        orderCoords={orderCoordinates} 
+        defaultPosition={defaultPosition} 
+        defaultZoom={defaultZoomLevel} 
+      />
     </MapContainer>
   );
 };
 
 export default MapDisplay;
+
