@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
 import L, { type LatLngExpression } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import axios from 'axios';
 
 // Icon fix
 // @ts-ignore
@@ -38,10 +39,59 @@ const OrderMapViewUpdater: React.FC<{ coords?: MapDisplayProps['orderCoordinates
 
 const MapDisplay: React.FC<MapDisplayProps> = ({ orderCoordinates }) => {
   const [isClient, setIsClient] = useState(false);
+  const [routePoints, setRoutePoints] = useState<LatLngExpression[] | null>(null);
+  
+  // IMPORTANT: Replace with your actual OpenRouteService API key
+  const YOUR_ORS_API_KEY = 'YOUR_OPENROUTESERVICE_API_KEY_HERE'; 
 
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  useEffect(() => {
+    if (orderCoordinates && isClient) {
+      if (YOUR_ORS_API_KEY === 'YOUR_OPENROUTESERVICE_API_KEY_HERE') {
+        console.warn(
+          'OpenRouteService API key is missing. Please add it to MapDisplay.tsx to fetch routes. Falling back to a straight line.'
+        );
+        setRoutePoints(null); // Ensure no old route is shown
+        return;
+      }
+
+      const fetchRoute = async () => {
+        const { pickup, destination } = orderCoordinates;
+        // Ensure coordinates are [lat, lng]
+        const pickupCoords = pickup as [number, number];
+        const destCoords = destination as [number, number];
+
+        // ORS expects lng,lat
+        const start = `${pickupCoords[1]},${pickupCoords[0]}`;
+        const end = `${destCoords[1]},${destCoords[0]}`;
+        
+        const url = `https://api.openrouteservice.org/v2/directions/driving-car?api_key=${YOUR_ORS_API_KEY}&start=${start}&end=${end}`;
+
+        try {
+          const response = await axios.get(url);
+          if (response.data && response.data.features && response.data.features.length > 0) {
+            const coordinates = response.data.features[0].geometry.coordinates;
+            // ORS coordinates are [lng, lat], map to [lat, lng] for Leaflet
+            const leafletCoords: LatLngExpression[] = coordinates.map((coord: [number, number]) => [coord[1], coord[0]] as LatLngExpression);
+            setRoutePoints(leafletCoords);
+          } else {
+            console.error('ORS: No route found or unexpected response format', response.data);
+            setRoutePoints(null);
+          }
+        } catch (error) {
+          console.error('Error fetching route from OpenRouteService:', error);
+          setRoutePoints(null);
+        }
+      };
+
+      fetchRoute();
+    } else {
+      setRoutePoints(null); // Clear route if no orderCoordinates or not client-side
+    }
+  }, [orderCoordinates, isClient, YOUR_ORS_API_KEY]);
 
   const defaultPosition: LatLngExpression = [51.505, -0.09];
   const defaultZoomLevel: number = 13;
@@ -50,8 +100,6 @@ const MapDisplay: React.FC<MapDisplayProps> = ({ orderCoordinates }) => {
     return null; 
   }
 
-  // Determine a unique key for MapContainer to force re-initialization if orderCoordinates fundamentally change
-  // This helps ensure fitBounds works correctly when navigating with new coordinates.
   const mapKey = orderCoordinates 
     ? `map-${JSON.stringify(orderCoordinates.pickup)}-${JSON.stringify(orderCoordinates.destination)}` 
     : 'default-map';
@@ -64,12 +112,12 @@ const MapDisplay: React.FC<MapDisplayProps> = ({ orderCoordinates }) => {
     <MapContainer
       key={mapKey}
       center={initialCenter}
-      zoom={defaultZoomLevel} // fitBounds in OrderMapViewUpdater will adjust this
+      zoom={defaultZoomLevel}
       scrollWheelZoom={true}
       style={{ height: '100%', width: '100%' }}
     >
       <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | Routing by <a href="https://openrouteservice.org/">OpenRouteService</a>'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
       <OrderMapViewUpdater coords={orderCoordinates} />
@@ -81,7 +129,12 @@ const MapDisplay: React.FC<MapDisplayProps> = ({ orderCoordinates }) => {
           <Marker position={orderCoordinates.destination}>
             <Popup>Destination Location</Popup>
           </Marker>
-          <Polyline positions={[orderCoordinates.pickup, orderCoordinates.destination]} color="blue" />
+          {routePoints && routePoints.length > 0 ? (
+            <Polyline positions={routePoints} color="blue" weight={5} opacity={0.7} />
+          ) : (
+            // Fallback to straight dashed line if no route points (API key missing, error, or still loading)
+            <Polyline positions={[orderCoordinates.pickup, orderCoordinates.destination]} color="gray" dashArray="10, 5" />
+          )}
         </>
       ) : (
         <Marker position={defaultPosition}>
