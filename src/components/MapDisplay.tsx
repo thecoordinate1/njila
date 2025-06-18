@@ -41,8 +41,7 @@ const MapDisplay: React.FC<MapDisplayProps> = ({ orderCoordinates }) => {
   const [isClient, setIsClient] = useState(false);
   const [routePoints, setRoutePoints] = useState<LatLngExpression[] | null>(null);
   
-  // IMPORTANT: Replace with your actual OpenRouteService API key
-  const YOUR_ORS_API_KEY = 'YOUR_OPENROUTESERVICE_API_KEY_HERE'; 
+  const YOUR_ORS_API_KEY = '5b3ce3597851110001cf624814648d498f8945a29cb04a972a24b149'; 
 
   useEffect(() => {
     setIsClient(true);
@@ -50,9 +49,9 @@ const MapDisplay: React.FC<MapDisplayProps> = ({ orderCoordinates }) => {
 
   useEffect(() => {
     if (orderCoordinates && isClient) {
-      if (YOUR_ORS_API_KEY === 'YOUR_OPENROUTESERVICE_API_KEY_HERE') {
+      if (YOUR_ORS_API_KEY === 'YOUR_OPENROUTESERVICE_API_KEY_HERE' || YOUR_ORS_API_KEY === '') { // Keep check for placeholder if user empties it
         console.warn(
-          'OpenRouteService API key is missing. Please add it to MapDisplay.tsx to fetch routes. Falling back to a straight line.'
+          'OpenRouteService API key is missing or is still the placeholder. Please add it to MapDisplay.tsx to fetch routes. Falling back to a straight line.'
         );
         setRoutePoints(null); // Ensure no old route is shown
         return;
