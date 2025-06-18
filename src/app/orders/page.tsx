@@ -2,6 +2,7 @@
 'use client';
 
 import type { NextPage } from 'next';
+import { useState } from 'react';
 import BottomNavbar from '@/components/BottomNavbar';
 import { Button } from "@/components/ui/button";
 import {
@@ -18,7 +19,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { ListChecksIcon, HistoryIcon } from 'lucide-react';
+import { ListChecksIcon, HistoryIcon, ChevronLeftIcon, MapIcon as LucideMapIcon } from 'lucide-react'; // Renamed MapIcon to avoid conflict
 import { cn } from '@/lib/utils';
 
 interface Order {
@@ -44,6 +45,16 @@ const orderHistoryData: Order[] = [
 ];
 
 const OrdersPage: NextPage = () => {
+  const [acceptedOrder, setAcceptedOrder] = useState<Order | null>(null);
+
+  const handleAcceptOrder = (order: Order) => {
+    setAcceptedOrder(order);
+  };
+
+  const handleBackToAvailable = () => {
+    setAcceptedOrder(null);
+  };
+
   return (
     <div className="relative min-h-screen flex flex-col bg-muted/30">
       <header className="sticky top-0 z-30 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -51,46 +62,78 @@ const OrdersPage: NextPage = () => {
           <h1 className="text-2xl font-bold tracking-tight">Manage Orders</h1>
         </div>
       </header>
-      <main className="flex-grow flex flex-col items-center p-4 md:p-6 pb-24"> {/* Increased pb for navbar */}
+      <main className="flex-grow flex flex-col items-center p-4 md:p-6 pb-24">
         
         <Tabs defaultValue="available" className="w-full max-w-3xl">
-          <TabsList className="grid w-full grid-cols-2 mb-6 shadow-sm sticky top-16 z-20 bg-muted"> {/* Sticky TabsList */}
+          <TabsList className="grid w-full grid-cols-2 mb-6 shadow-sm sticky top-16 z-20 bg-muted">
             <TabsTrigger value="available" className="py-3 text-sm font-medium">Available Orders</TabsTrigger>
             <TabsTrigger value="history" className="py-3 text-sm font-medium">Order History</TabsTrigger>
           </TabsList>
+          
           <TabsContent value="available">
-            <div className="space-y-6">
-              {availableOrdersData.length > 0 ? (
-                availableOrdersData.map((order) => (
-                  <Card key={order.id} className="overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 rounded-lg">
-                    <CardHeader className="pb-3 pt-5 px-5">
-                      <div className="flex justify-between items-start mb-1">
-                        <CardTitle className="text-xl font-semibold">Order #{order.id}</CardTitle>
-                        {order.distance && <p className="text-xs font-medium text-primary bg-primary/10 px-2.5 py-1 rounded-full">{order.distance}</p>}
-                      </div>
-                      <CardDescription className="text-xs text-muted-foreground pt-1">
-                        <span className="font-medium text-foreground">From:</span> {order.pickup} <br />
-                        <span className="font-medium text-foreground">To:</span> {order.destination}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="pt-2 pb-4 px-5">
-                      <p className="text-2xl font-bold text-primary">${order.payout.toFixed(2)}</p>
-                      <p className="text-xs text-muted-foreground">Estimated Payout</p>
-                    </CardContent>
-                    <CardFooter className="bg-muted/50 p-4 border-t">
-                      <Button className="w-full" size="lg">Accept Order</Button>
-                    </CardFooter>
-                  </Card>
-                ))
-              ) : (
-                <div className="text-center py-16 rounded-lg bg-card shadow-sm">
-                  <ListChecksIcon className="mx-auto h-16 w-16 text-muted-foreground/70 mb-5" />
-                  <h3 className="text-2xl font-semibold mb-2 text-foreground/90">No Available Orders</h3>
-                  <p className="text-sm text-muted-foreground px-4">Check back soon! New delivery opportunities are added regularly.</p>
-                </div>
-              )}
-            </div>
+            {!acceptedOrder ? (
+              <div className="space-y-6">
+                {availableOrdersData.length > 0 ? (
+                  availableOrdersData.map((order) => (
+                    <Card key={order.id} className="overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 rounded-lg">
+                      <CardHeader className="pb-3 pt-5 px-5">
+                        <div className="flex justify-between items-start mb-1">
+                          <CardTitle className="text-xl font-semibold">Order #{order.id}</CardTitle>
+                          {order.distance && <p className="text-xs font-medium text-primary bg-primary/10 px-2.5 py-1 rounded-full">{order.distance}</p>}
+                        </div>
+                        <CardDescription className="text-xs text-muted-foreground pt-1">
+                          <span className="font-medium text-foreground">From:</span> {order.pickup} <br />
+                          <span className="font-medium text-foreground">To:</span> {order.destination}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="pt-2 pb-4 px-5">
+                        <p className="text-2xl font-bold text-primary">${order.payout.toFixed(2)}</p>
+                        <p className="text-xs text-muted-foreground">Estimated Payout</p>
+                      </CardContent>
+                      <CardFooter className="bg-muted/50 p-4 border-t">
+                        <Button className="w-full" size="lg" onClick={() => handleAcceptOrder(order)}>Accept Order</Button>
+                      </CardFooter>
+                    </Card>
+                  ))
+                ) : (
+                  <div className="text-center py-16 rounded-lg bg-card shadow-sm">
+                    <ListChecksIcon className="mx-auto h-16 w-16 text-muted-foreground/70 mb-5" />
+                    <h3 className="text-2xl font-semibold mb-2 text-foreground/90">No Available Orders</h3>
+                    <p className="text-sm text-muted-foreground px-4">Check back soon! New delivery opportunities are added regularly.</p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Card className="overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 rounded-lg">
+                <CardHeader className="pb-3 pt-5 px-5">
+                  <div className="flex justify-between items-start mb-1">
+                    <CardTitle className="text-xl font-semibold">Accepted: Order #{acceptedOrder.id}</CardTitle>
+                    {acceptedOrder.distance && <p className="text-xs font-medium text-primary bg-primary/10 px-2.5 py-1 rounded-full">{acceptedOrder.distance}</p>}
+                  </div>
+                  <CardDescription className="text-xs text-muted-foreground pt-1">
+                    <span className="font-medium text-foreground">From:</span> {acceptedOrder.pickup} <br />
+                    <span className="font-medium text-foreground">To:</span> {acceptedOrder.destination}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="pt-2 pb-4 px-5">
+                  <p className="text-2xl font-bold text-primary">${acceptedOrder.payout.toFixed(2)}</p>
+                  <p className="text-xs text-muted-foreground">Payout</p>
+                </CardContent>
+                <CardFooter className="bg-muted/50 p-4 border-t flex flex-col space-y-3">
+                  <Button variant="outline" className="w-full" onClick={handleBackToAvailable}>
+                    <ChevronLeftIcon className="mr-2 h-4 w-4" /> Back to Available Orders
+                  </Button>
+                  <Button 
+                    className="w-full" 
+                    onClick={() => alert(`Placeholder: Implement "View on Map" for order ${acceptedOrder.id}`)}
+                  >
+                    <LucideMapIcon className="mr-2 h-4 w-4" /> View on Map
+                  </Button>
+                </CardFooter>
+              </Card>
+            )}
           </TabsContent>
+
           <TabsContent value="history">
             <div className="space-y-6">
               {orderHistoryData.length > 0 ? (
