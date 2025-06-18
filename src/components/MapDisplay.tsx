@@ -129,7 +129,7 @@ const MapDisplay: React.FC<MapDisplayProps> = ({ orderCoordinates }) => {
             <Popup>Destination Location</Popup>
           </Marker>
           {routePoints && routePoints.length > 0 ? (
-            <Polyline positions={routePoints} color="blue" weight={5} opacity={0.7} />
+            <Polyline positions={routePoints} color="green" weight={8} opacity={0.7} />
           ) : (
             // Fallback to straight dashed line if no route points (API key missing, error, or still loading)
             <Polyline positions={[orderCoordinates.pickup, orderCoordinates.destination]} color="gray" dashArray="10, 5" />
