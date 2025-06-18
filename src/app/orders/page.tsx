@@ -3,6 +3,7 @@
 
 import type { NextPage } from 'next';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import BottomNavbar from '@/components/BottomNavbar';
 import { Button } from "@/components/ui/button";
 import {
@@ -19,8 +20,9 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { ListChecksIcon, HistoryIcon, ChevronLeftIcon, MapIcon as LucideMapIcon } from 'lucide-react'; // Renamed MapIcon to avoid conflict
+import { ListChecksIcon, HistoryIcon, ChevronLeftIcon, MapIcon as LucideMapIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import type { LatLngExpression } from 'leaflet';
 
 interface Order {
   id: string;
@@ -30,22 +32,24 @@ interface Order {
   distance?: string;
   dateCompleted?: string;
   status?: "Completed" | "Cancelled" | "Pending";
+  pickupCoords: LatLngExpression;
+  destinationCoords: LatLngExpression;
 }
 
 const availableOrdersData: Order[] = [
-  { id: '1', pickup: '123 Main St, Anytown, USA', destination: '456 Oak Ave, Anytown, USA', payout: 15.50, distance: '2.5 miles', status: 'Pending' },
-  { id: '2', pickup: '789 Pine Ln, Otherville, USA', destination: '101 Maple Dr, Otherville, USA', payout: 22.00, distance: '5 miles', status: 'Pending' },
-  { id: '3', pickup: '234 Elm Rd, Sometown, USA', destination: '567 Birch Ct, Sometown, USA', payout: 12.75, distance: '1.8 miles', status: 'Pending' },
+  { id: '1', pickup: 'Union Station, Los Angeles', destination: 'Santa Monica Pier, Santa Monica', payout: 15.50, distance: '15 miles', status: 'Pending', pickupCoords: [34.0562, -118.2342], destinationCoords: [34.0086, -118.4986] },
+  { id: '2', pickup: 'Grand Central Terminal, New York', destination: 'Times Square, New York', payout: 22.00, distance: '1 mile', status: 'Pending', pickupCoords: [40.7527, -73.9772], destinationCoords: [40.7580, -73.9855] },
+  { id: '3', pickup: 'Navy Pier, Chicago', destination: 'Millennium Park, Chicago', payout: 12.75, distance: '1.8 miles', status: 'Pending', pickupCoords: [41.8917, -87.6097], destinationCoords: [41.8826, -87.6226] },
 ];
 
 const orderHistoryData: Order[] = [
-  { id: 'h1', pickup: '321 Willow Way, Villagetown, USA', destination: '654 Cedar Cres, Villagetown, USA', payout: 18.25, dateCompleted: '2023-10-25', status: 'Completed' },
-  { id: 'h2', pickup: '987 Spruce St, Cityburg, USA', destination: '123 Aspen Pl, Cityburg, USA', payout: 9.50, dateCompleted: '2023-10-24', status: 'Cancelled' },
-  { id: 'h3', pickup: '555 Redwood Dr, Forestville, USA', destination: '777 Sequoia Ave, Forestville, USA', payout: 30.10, dateCompleted: '2023-10-22', status: 'Completed' },
+  { id: 'h1', pickup: 'Fisherman\'s Wharf, San Francisco', destination: 'Golden Gate Bridge Welcome Center, San Francisco', payout: 18.25, dateCompleted: '2023-10-25', status: 'Completed', pickupCoords: [37.8080, -122.4177], destinationCoords: [37.8071, -122.4746] },
+  { id: 'h2', pickup: 'Space Needle, Seattle', destination: 'Pike Place Market, Seattle', payout: 9.50, dateCompleted: '2023-10-24', status: 'Cancelled', pickupCoords: [47.6205, -122.3493], destinationCoords: [47.6098, -122.3421] },
 ];
 
 const OrdersPage: NextPage = () => {
   const [acceptedOrder, setAcceptedOrder] = useState<Order | null>(null);
+  const router = useRouter();
 
   const handleAcceptOrder = (order: Order) => {
     setAcceptedOrder(order);
@@ -53,6 +57,16 @@ const OrdersPage: NextPage = () => {
 
   const handleBackToAvailable = () => {
     setAcceptedOrder(null);
+  };
+
+  const handleViewOnMap = (order: Order) => {
+    const { pickupCoords, destinationCoords } = order;
+    // Assuming Coords are [lat, lng]
+    const pLat = (pickupCoords as number[])[0];
+    const pLng = (pickupCoords as number[])[1];
+    const dLat = (destinationCoords as number[])[0];
+    const dLng = (destinationCoords as number[])[1];
+    router.push(`/?pickupLat=${pLat}&pickupLng=${pLng}&destLat=${dLat}&destLng=${dLng}`);
   };
 
   return (
@@ -125,7 +139,7 @@ const OrdersPage: NextPage = () => {
                   </Button>
                   <Button 
                     className="w-full" 
-                    onClick={() => alert(`Placeholder: Implement "View on Map" for order ${acceptedOrder.id}`)}
+                    onClick={() => handleViewOnMap(acceptedOrder)}
                   >
                     <LucideMapIcon className="mr-2 h-4 w-4" /> View on Map
                   </Button>
