@@ -2,7 +2,7 @@
 "use client"
 
 import * as React from "react"
-import ** SwitchPrimitives from "@radix-ui/react-switch"
+import * as SwitchPrimitives from "@radix-ui/react-switch"
 
 import { cn } from "@/lib/utils"
 
