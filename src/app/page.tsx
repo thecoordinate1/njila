@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Switch } from '@/components/ui/switch';
 import { PowerIcon, PowerOffIcon, PackageIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import type { NextPage } from 'next'; // Added NextPage type
 
 const MapDisplay = dynamic(() => import('@/components/MapDisplay'), {
   ssr: false, 
@@ -54,7 +55,10 @@ const HomePage: NextPage = () => {
     <div className="flex flex-col h-screen overflow-hidden">
       {/* Map and Overlays Area */}
       <div className="relative flex-grow">
-        <MapDisplay /> {/* Map takes available space */}
+        {/* Map Container - explicitly ensure it's in the background */}
+        <div className="absolute inset-0 z-0">
+          <MapDisplay /> {/* Map takes available space of this container */}
+        </div>
 
         {/* Header Overlay */}
         <header className="absolute top-0 left-0 right-0 z-20 bg-background/80 backdrop-blur-sm shadow-sm">
@@ -79,7 +83,7 @@ const HomePage: NextPage = () => {
 
         {/* Scrollable Content Area Overlays on map */}
         {/* Adjusted bottom to account for GoOnlineButton area and BottomNavbar */}
-        <main className="absolute top-16 left-0 right-0 bottom-[calc(4rem+4.5rem)] p-4 overflow-y-auto space-y-4 z-10">
+        <main className="absolute top-16 left-0 right-0 bottom-[calc(4rem+4.75rem)] p-4 overflow-y-auto space-y-4 z-10">
           {isOnline ? (
             currentDelivery ? (
               <Card className="shadow-lg rounded-lg bg-card/95 backdrop-blur-sm">
@@ -114,8 +118,8 @@ const HomePage: NextPage = () => {
         </main>
 
         {/* Go Online/Offline Button Area - fixed above navbar */}
-        {/* h-11 for button, p-4 means 1rem padding top/bottom. Total ~2.75rem + 2rem = 4.75rem. Set to 4.5rem */}
-        <div className="absolute bottom-16 left-0 right-0 p-4 bg-background/80 backdrop-blur-sm border-t border-border z-20 h-[calc(2.75rem+2rem)] flex items-center justify-center">
+        {/* Button area height is 4.75rem (h-11 button (2.75rem) + p-4 (2rem)) */}
+        <div className="absolute bottom-16 left-0 right-0 p-4 bg-background/80 backdrop-blur-sm border-t border-border z-20 h-[4.75rem] flex items-center justify-center">
           <Button 
             onClick={handleToggleOnline} 
             className="w-full max-w-md rounded-lg shadow-md" 
