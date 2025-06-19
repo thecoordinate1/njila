@@ -4,12 +4,10 @@
 import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import BottomNavbar from '@/components/BottomNavbar';
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Switch } from '@/components/ui/switch';
-import { PowerIcon, PowerOffIcon, PackageIcon } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import type { NextPage } from 'next'; // Added NextPage type
+import { PackageIcon } from 'lucide-react';
+import type { NextPage } from 'next'; 
 
 const MapDisplay = dynamic(() => import('@/components/MapDisplay'), {
   ssr: false, 
@@ -82,8 +80,8 @@ const HomePage: NextPage = () => {
         </header>
 
         {/* Scrollable Content Area Overlays on map */}
-        {/* Adjusted bottom to account for GoOnlineButton area and BottomNavbar */}
-        <main className="absolute top-16 left-0 right-0 bottom-[calc(4rem+4.75rem)] p-4 overflow-y-auto space-y-4 z-10">
+        {/* Adjusted bottom to account for BottomNavbar (h-16 or 4rem) */}
+        <main className="absolute top-16 left-0 right-0 bottom-16 p-4 overflow-y-auto space-y-4 z-10">
           {isOnline ? (
             currentDelivery ? (
               <Card className="shadow-lg rounded-lg bg-card/95 backdrop-blur-sm">
@@ -98,7 +96,8 @@ const HomePage: NextPage = () => {
                   <p><strong className="text-foreground">Stops:</strong> {currentDelivery.stops}</p>
                   <p><strong className="text-foreground">Next Stop:</strong> {currentDelivery.nextStopAddress}</p>
                   <p><strong className="text-foreground">Est. Completion:</strong> {currentDelivery.estimatedCompletion}</p>
-                  <Button className="w-full mt-3" variant="outline" size="sm">View Batch Details</Button>
+                  {/* Example button, can be customized or linked */}
+                  {/* <Button className="w-full mt-3" variant="outline" size="sm">View Batch Details</Button> */}
                 </CardContent>
               </Card>
             ) : (
@@ -117,19 +116,7 @@ const HomePage: NextPage = () => {
           )}
         </main>
 
-        {/* Go Online/Offline Button Area - fixed above navbar */}
-        {/* Button area height is 4.75rem (h-11 button (2.75rem) + p-4 (2rem)) */}
-        <div className="absolute bottom-16 left-0 right-0 p-4 bg-background/80 backdrop-blur-sm border-t border-border z-20 h-[4.75rem] flex items-center justify-center">
-          <Button 
-            onClick={handleToggleOnline} 
-            className="w-full max-w-md rounded-lg shadow-md" 
-            size="lg"
-            variant={isOnline ? "destructive" : "default"}
-          >
-            {isOnline ? <PowerOffIcon className="mr-2 h-5 w-5" /> : <PowerIcon className="mr-2 h-5 w-5" />}
-            {isOnline ? 'Go Offline' : 'Go Online'}
-          </Button>
-        </div>
+        {/* The "Go Online/Offline Button Area" has been removed */}
       </div>
 
       {/* Bottom Navbar is h-16 (4rem) */}
