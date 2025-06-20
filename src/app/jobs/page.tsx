@@ -3,14 +3,13 @@
 
 import type { NextPage } from 'next';
 import { useState } from 'react';
-import { useRouter } from 'next/navigation'; // Import useRouter
+import { useRouter } from 'next/navigation'; 
 import BottomNavbar from '@/components/BottomNavbar';
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardFooter,
   CardHeader,
+  CardFooter,
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -38,41 +37,41 @@ interface Job {
 
 const mockJobsData: Job[] = [
   {
-    id: 'JOB001',
-    title: 'Downtown Express Delivery',
-    distance: '5.2 km',
-    time: '35 mins',
-    stops: 3,
-    payout: 45.0,
-    currency: 'USD',
-    pickupAddress: 'Kamwala Market, Stand 34',
+    id: 'JOB_LSK001',
+    title: 'Lusaka Express Consignment',
+    distance: '15.2 km',
+    time: '45 mins',
+    stops: 2,
+    payout: 120.0,
+    currency: 'USD', // Keep as USD for consistency unless amounts are ZMW
+    pickupAddress: 'Kamwala South Market, Off Chilumbulu Rd, Lusaka',
   },
   {
-    id: 'JOB002',
-    title: 'Suburb Food Drop',
-    distance: '12.8 km',
-    time: '55 mins',
-    stops: 5,
-    payout: 70.5,
+    id: 'JOB_LSK002',
+    title: 'East Lusaka Food Delivery',
+    distance: '22.8 km',
+    time: '1hr 5 mins',
+    stops: 4,
+    payout: 180.5,
     currency: 'USD',
-    pickupAddress: 'EastPark Mall, Entrance B',
+    pickupAddress: 'EastPark Mall, Main Entrance, Lusaka',
   },
   {
-    id: 'JOB003',
-    title: 'Quick Pharma Run',
-    distance: '2.1 km',
-    time: '15 mins',
+    id: 'JOB_LSK003',
+    title: 'UTH Medical Supplies Run',
+    distance: '8.1 km',
+    time: '25 mins',
     stops: 1,
-    payout: 25.0,
+    payout: 75.0,
     currency: 'USD',
-    pickupAddress: 'University Teaching Hospital Pharmacy',
+    pickupAddress: 'University Teaching Hospital (UTH) Pharmacy, Lusaka',
   },
 ];
 
 const JobsPage: NextPage = () => {
   const [jobs, setJobs] = useState<Job[]>(mockJobsData);
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter(); // Initialize router
+  const router = useRouter(); 
 
   const handleRefreshJobs = () => {
     setIsLoading(true);
@@ -86,13 +85,11 @@ const JobsPage: NextPage = () => {
 
   const handleAcceptJob = (jobId: string) => {
     console.log(`Accepted job: ${jobId}`);
-    // Navigate to home page and signal it to start a delivery
-    // The HomePage will read 'autoStartDelivery' and 'jobId'
     router.push(`/?autoStartDelivery=true&jobId=${jobId}`);
   };
 
   const formatCurrency = (amount: number, currencyCode: string) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-US', { // Keep en-US for USD formatting
       style: 'currency',
       currency: currencyCode,
     }).format(amount);

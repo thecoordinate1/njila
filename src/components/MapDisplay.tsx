@@ -71,7 +71,11 @@ const MapUpdater: React.FC<{
       }
     } else if (orderCoordinates) {
       boundsToFit = L.latLngBounds([orderCoordinates.pickup, orderCoordinates.destination]);
+    } else if (driverLocation) {
+        map.setView(driverLocation, 15); // Zoom into driver location if only that is available
+        return;
     }
+
 
     if (boundsToFit && boundsToFit.isValid()) {
         const currentStopInstance = stops?.find(s => s.id === currentStopId);
@@ -105,7 +109,11 @@ const RecenterButton: React.FC<{
       else boundsToFit = L.latLngBounds(stopCoords);
     } else if (orderCoordinates) {
       boundsToFit = L.latLngBounds([orderCoordinates.pickup, orderCoordinates.destination]);
+    } else if (driverLocation) {
+        map.setView(driverLocation, 15); // Zoom into driver location
+        return;
     }
+
 
     if (boundsToFit && boundsToFit.isValid()) {
         map.fitBounds(boundsToFit, { padding: [50, 50] });
@@ -244,7 +252,7 @@ const MapDisplay: React.FC<MapDisplayProps> = ({ orderCoordinates, driverLocatio
     return <div className="h-full w-full bg-muted flex items-center justify-center"><p>Initializing Map...</p></div>;
   }
 
-  const defaultPosition: LatLngExpression = driverLocation || (stops && stops.length > 0 ? stops[0].coordinates : [34.0522, -118.2437]);
+  const defaultPosition: LatLngExpression = driverLocation || (stops && stops.length > 0 ? stops[0].coordinates : [-15.4167, 28.2833]); // Lusaka Center
   const defaultZoomLevel: number = 13;
 
   return (
@@ -254,10 +262,9 @@ const MapDisplay: React.FC<MapDisplayProps> = ({ orderCoordinates, driverLocatio
       zoom={defaultZoomLevel}
       scrollWheelZoom={true}
       style={{ height: '100%', width: '100%' }}
-      attributionControl={false} // Hide the attribution control
+      attributionControl={false} 
     >
       <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | Routing by <a href="https://openrouteservice.org/">OpenRouteService</a>'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
       <MapUpdater 
@@ -318,8 +325,8 @@ const MapDisplay: React.FC<MapDisplayProps> = ({ orderCoordinates, driverLocatio
 };
 
 const MapDisplayWrapper: React.FC<MapDisplayProps> = (props) => {
-  // MapDisplay now handles its own client-side initialization and loading state.
   return <MapDisplay {...props} />;
 };
 
 export default MapDisplayWrapper;
+

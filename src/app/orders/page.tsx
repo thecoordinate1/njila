@@ -37,14 +37,14 @@ interface Order {
 }
 
 const availableOrdersData: Order[] = [
-  { id: '1', pickup: 'Union Station, Los Angeles', destination: 'Santa Monica Pier, Santa Monica', payout: 15.50, distance: '15 miles', status: 'Pending', pickupCoords: [34.0562, -118.2342], destinationCoords: [34.0086, -118.4986] },
-  { id: '2', pickup: 'Grand Central Terminal, New York', destination: 'Times Square, New York', payout: 22.00, distance: '1 mile', status: 'Pending', pickupCoords: [40.7527, -73.9772], destinationCoords: [40.7580, -73.9855] },
-  { id: '3', pickup: 'Navy Pier, Chicago', destination: 'Millennium Park, Chicago', payout: 12.75, distance: '1.8 miles', status: 'Pending', pickupCoords: [41.8917, -87.6097], destinationCoords: [41.8826, -87.6226] },
+  { id: 'LSK_ORD_1', pickup: 'Levy Junction Mall, Lusaka', destination: 'Arcades Shopping Mall, Lusaka', payout: 15.50, distance: '5.5 km', status: 'Pending', pickupCoords: [-15.4090, 28.3100], destinationCoords: [-15.3950, 28.3300] },
+  { id: 'LSK_ORD_2', pickup: 'Soweto Market, Lumumba Rd, Lusaka', destination: 'Bauleni Market, Lusaka', payout: 22.00, distance: '12 km', status: 'Pending', pickupCoords: [-15.4250, 28.2700], destinationCoords: [-15.4400, 28.3500] },
+  { id: 'LSK_ORD_3', pickup: 'Civic Centre, Independence Ave, Lusaka', destination: 'National Assembly of Zambia, Lusaka', payout: 12.75, distance: '3.8 km', status: 'Pending', pickupCoords: [-15.4170, 28.2810], destinationCoords: [-15.4000, 28.3050] },
 ];
 
 const orderHistoryData: Order[] = [
-  { id: 'h1', pickup: 'Fisherman\'s Wharf, San Francisco', destination: 'Golden Gate Bridge Welcome Center, San Francisco', payout: 18.25, dateCompleted: '2023-10-25', status: 'Completed', pickupCoords: [37.8080, -122.4177], destinationCoords: [37.8071, -122.4746] },
-  { id: 'h2', pickup: 'Space Needle, Seattle', destination: 'Pike Place Market, Seattle', payout: 9.50, dateCompleted: '2023-10-24', status: 'Cancelled', pickupCoords: [47.6205, -122.3493], destinationCoords: [47.6098, -122.3421] },
+  { id: 'LSK_HIST_1', pickup: 'Kenneth Kaunda International Airport (LUN), Lusaka', destination: 'Taj Pamodzi Hotel, Lusaka', payout: 18.25, dateCompleted: '2023-10-25', status: 'Completed', pickupCoords: [-15.3280, 28.4520], destinationCoords: [-15.4200, 28.2950] },
+  { id: 'LSK_HIST_2', pickup: 'Intercity Bus Terminus, Dedan Kimathi Rd, Lusaka', destination: 'Crossroads Shopping Mall, Lusaka', payout: 9.50, dateCompleted: '2023-10-24', status: 'Cancelled', pickupCoords: [-15.4280, 28.2800], destinationCoords: [-15.3850, 28.3350] },
 ];
 
 const OrdersPage: NextPage = () => {
@@ -199,3 +199,4 @@ const OrdersPage: NextPage = () => {
 };
 
 export default OrdersPage;
+

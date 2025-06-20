@@ -33,16 +33,16 @@ const DynamicMapDisplay = dynamic(() => import('@/components/MapDisplay'), {
 });
 
 const mockBatchData: DeliveryBatch = {
-  id: 'BATCH789',
-  label: 'Downtown Multi-Drop',
+  id: 'BATCH_LSK001',
+  label: 'Lusaka Central Drops',
   stops: [
-    { id: 'S1', type: 'pickup', address: '123 Main St, Warehouse A, Anytown, USA', shortAddress: '123 Main St (Warehouse)', coordinates: [34.0522, -118.2437], status: 'pending', sequence: 1, items: ['Electronics Box'] },
-    { id: 'S2', type: 'dropoff', address: '456 Oak Ave, Suite 101, Anytown, USA', shortAddress: '456 Oak Ave (Suite 101)', coordinates: [34.0560, -118.2500], status: 'pending', sequence: 2, items: ['Electronics Box'] },
-    { id: 'S3', type: 'pickup', address: '789 Pine Ln, Loading Bay 3, Anytown, USA', shortAddress: '789 Pine Ln (Bay 3)', coordinates: [34.0500, -118.2550], status: 'pending', sequence: 3, items: ['Documents Package'] },
-    { id: 'S4', type: 'dropoff', address: '101 Maple Dr, Anytown, USA', shortAddress: '101 Maple Dr', coordinates: [34.0600, -118.2400], status: 'pending', sequence: 4, items: ['Documents Package'] },
+    { id: 'LSK_S1', type: 'pickup', address: 'Kamwala Market, Independence Ave, Lusaka', shortAddress: 'Kamwala Market', coordinates: [-15.4320, 28.2910], status: 'pending', sequence: 1, items: ['Groceries Basket'] },
+    { id: 'LSK_S2', type: 'dropoff', address: 'EastPark Mall, Great East Rd, Lusaka', shortAddress: 'EastPark Mall', coordinates: [-15.3990, 28.3410], status: 'pending', sequence: 2, items: ['Groceries Basket'] },
+    { id: 'LSK_S3', type: 'pickup', address: 'University Teaching Hospital (UTH), Nationalist Rd, Lusaka', shortAddress: 'UTH Lusaka', coordinates: [-15.4050, 28.3000], status: 'pending', sequence: 3, items: ['Medical Supplies'] },
+    { id: 'LSK_S4', type: 'dropoff', address: 'Manda Hill Mall, Great East Rd, Lusaka', shortAddress: 'Manda Hill Mall', coordinates: [-15.4020, 28.3190], status: 'pending', sequence: 4, items: ['Medical Supplies'] },
   ],
-  estimatedTotalTime: '1hr 15mins',
-  estimatedTotalDistance: '12.5 km',
+  estimatedTotalTime: '1hr 30mins',
+  estimatedTotalDistance: '18.5 km',
 };
 
 // It's good practice to wrap components that use useSearchParams in Suspense
@@ -73,9 +73,7 @@ const HomePageContent: NextPage = () => {
       setIsOnline(true); // This triggers the effect below to load mockBatchData
 
       // Clear the query parameters to prevent re-triggering
-      // router.replace takes the pathname and an optional 'as' path.
-      // Providing undefined for 'as' and { shallow: true } should work.
-      router.replace(pathname, undefined); // Using undefined here clears query params as per Next.js docs for App Router
+      router.replace(pathname, undefined); 
     }
   }, [searchParams, isOnline, currentDelivery, setIsOnline, router, pathname]);
 
