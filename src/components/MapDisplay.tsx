@@ -9,7 +9,7 @@ import 'leaflet/dist/leaflet.css';
 import axios from 'axios';
 import { Button } from "@/components/ui/button";
 import { LocateFixedIcon, TruckIcon, PackageIcon, NavigationIcon } from 'lucide-react';
-import { renderToStaticMarkup } from 'react-dom/server'; // For custom icons
+import { renderToStaticMarkup } from 'react-dom/server'; 
 import type { OrderStop } from '@/types/delivery';
 
 // Icon fix for default markers
@@ -93,7 +93,7 @@ const RecenterButton: React.FC<{
   routePoints?: LatLngExpression[] | null;
   orderCoordinates?: MapDisplayProps['orderCoordinates'];
 }> = ({ defaultPosition, defaultZoom, driverLocation, stops, routePoints, orderCoordinates }) => {
-  const map = useMap(); // useMap() is called correctly inside a child of MapContainer
+  const map = useMap(); 
 
   const handleRecenterClick = () => {
     let boundsToFit: L.LatLngBounds | null = null;
@@ -230,13 +230,6 @@ const MapDisplay: React.FC<MapDisplayProps> = ({ orderCoordinates, driverLocatio
     }
   }, [driverLocation, pendingStops, orderCoordinates, isClient, YOUR_ORS_API_KEY]);
 
-  const defaultPosition: LatLngExpression = driverLocation || (stops && stops.length > 0 ? stops[0].coordinates : [34.0522, -118.2437]);
-  const defaultZoomLevel: number = 13;
-
-  if (!isClient) {
-    return null; 
-  }
-
   const mapKey = useMemo(() => {
     let keyParts = ['map'];
     if (driverLocation) keyParts.push(`driver-${(driverLocation as number[]).join('-')}`);
@@ -245,6 +238,14 @@ const MapDisplay: React.FC<MapDisplayProps> = ({ orderCoordinates, driverLocatio
     if (orderCoordinates) keyParts.push(`order-${(orderCoordinates.pickup as number[]).join('-')}-${(orderCoordinates.destination as number[]).join('-')}`);
     return keyParts.join('_');
   }, [driverLocation, stops, currentStopId, orderCoordinates]);
+
+  // All hooks (useState, useEffect, useMemo for mapKey) are called before this conditional return.
+  if (!isClient) {
+    return <div className="h-full w-full bg-muted flex items-center justify-center"><p>Initializing Map...</p></div>;
+  }
+
+  const defaultPosition: LatLngExpression = driverLocation || (stops && stops.length > 0 ? stops[0].coordinates : [34.0522, -118.2437]);
+  const defaultZoomLevel: number = 13;
 
   return (
     <MapContainer
@@ -288,10 +289,10 @@ const MapDisplay: React.FC<MapDisplayProps> = ({ orderCoordinates, driverLocatio
       
       {!stops && orderCoordinates && (
         <>
-          <Marker position={orderCoordinates.pickup}>
+          <Marker position={orderCoordinates.pickup} icon={pickupIcon(false)}>
             <Popup>Pickup Location</Popup>
           </Marker>
-          <Marker position={orderCoordinates.destination}>
+          <Marker position={orderCoordinates.destination} icon={dropoffIcon(false)}>
             <Popup>Destination Location</Popup>
           </Marker>
         </>
@@ -316,13 +317,8 @@ const MapDisplay: React.FC<MapDisplayProps> = ({ orderCoordinates, driverLocatio
 };
 
 const MapDisplayWrapper: React.FC<MapDisplayProps> = (props) => {
-  const [isClient, setIsClient] = useState(false);
-  useEffect(() => { setIsClient(true); }, []);
-  if (!isClient) return <div className="h-full w-full bg-muted flex items-center justify-center"><p>Initializing Map...</p></div>;
-
-  return (
-     <MapDisplay {...props} />
-  );
-}
+  // MapDisplay now handles its own client-side initialization and loading state.
+  return <MapDisplay {...props} />;
+};
 
 export default MapDisplayWrapper;
