@@ -68,7 +68,7 @@ const HomePageContent: NextPage = () => {
       console.log(`Auto-starting delivery, triggered by job ID: ${acceptedJobId || 'any available'}`);
       setIsOnline(true); 
 
-      const newPath = pathname; // Keep current path, remove query params
+      const newPath = pathname; 
       router.replace(newPath, undefined); 
     }
   }, [searchParams, isOnline, currentDelivery, setIsOnline, router, pathname]);
@@ -82,25 +82,26 @@ const HomePageContent: NextPage = () => {
           setGpsError(null);
         },
         (error) => {
-          console.error('Detailed geolocation error:', error);
           let errorMessage = 'Unable to retrieve location. GPS might be disabled or permissions denied.';
-          if (error && error.message) {
+          // Try to get a more specific error message
+          if (error && typeof error.message === 'string' && error.message.trim() !== '') {
             errorMessage = error.message;
-          } else if (error && error.code) {
+          } else if (error && typeof error.code === 'number') {
             switch (error.code) {
               case error.PERMISSION_DENIED:
-                errorMessage = "Geolocation permission denied.";
+                errorMessage = "Geolocation permission denied. Please enable location services for this app in your browser/system settings.";
                 break;
               case error.POSITION_UNAVAILABLE:
-                errorMessage = "Location information is unavailable.";
+                errorMessage = "Location information is currently unavailable. Please check your GPS signal or try again later.";
                 break;
               case error.TIMEOUT:
-                errorMessage = "The request to get user location timed out.";
+                errorMessage = "The request to get user location timed out. Please check your connection or try again.";
                 break;
               default:
-                errorMessage = `An unknown error occurred (Code: ${error.code}).`;
+                errorMessage = `An unknown geolocation error occurred (Code: ${error.code}).`;
             }
           }
+          console.error('Geolocation error details:', `Message: "${errorMessage}"`, 'Raw error object:', error);
           setGpsError(errorMessage);
           setDriverLocation(null);
         },
@@ -108,7 +109,9 @@ const HomePageContent: NextPage = () => {
       );
       return () => navigator.geolocation.clearWatch(watchId);
     } else {
-        setGpsError("Geolocation is not supported by this browser.");
+        const noGeoMessage = "Geolocation is not supported by this browser or is unavailable.";
+        console.warn(noGeoMessage);
+        setGpsError(noGeoMessage);
     }
   }, []);
 
