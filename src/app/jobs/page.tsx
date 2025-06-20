@@ -3,6 +3,7 @@
 
 import type { NextPage } from 'next';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation'; // Import useRouter
 import BottomNavbar from '@/components/BottomNavbar';
 import {
   Card,
@@ -71,12 +72,12 @@ const mockJobsData: Job[] = [
 const JobsPage: NextPage = () => {
   const [jobs, setJobs] = useState<Job[]>(mockJobsData);
   const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter(); // Initialize router
 
   const handleRefreshJobs = () => {
     setIsLoading(true);
     // Simulate API call
     setTimeout(() => {
-      // Potentially shuffle or slightly alter mock data to simulate refresh
       const shuffledJobs = [...mockJobsData].sort(() => Math.random() - 0.5);
       setJobs(shuffledJobs);
       setIsLoading(false);
@@ -85,7 +86,9 @@ const JobsPage: NextPage = () => {
 
   const handleAcceptJob = (jobId: string) => {
     console.log(`Accepted job: ${jobId}`);
-    // Here you would typically navigate to an active job screen or update state
+    // Navigate to home page and signal it to start a delivery
+    // The HomePage will read 'autoStartDelivery' and 'jobId'
+    router.push(`/?autoStartDelivery=true&jobId=${jobId}`);
   };
 
   const formatCurrency = (amount: number, currencyCode: string) => {

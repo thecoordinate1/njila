@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, Suspense } from 'react';
 import dynamic from 'next/dynamic';
 import BottomNavbar from '@/components/BottomNavbar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -20,12 +20,12 @@ import {
   Edit2Icon,
   ChevronLeftIcon,
   ListOrderedIcon,
-  HomeIcon // For the header when no active delivery
+  HomeIcon
 } from 'lucide-react';
 import type { NextPage } from 'next';
 import type { DeliveryBatch, OrderStop } from '@/types/delivery';
 import type { LatLngExpression } from 'leaflet';
-import { useRouter } from 'next/navigation'; // For potential navigation after batch completion
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 
 const DynamicMapDisplay = dynamic(() => import('@/components/MapDisplay'), {
   ssr: false,
@@ -45,12 +45,17 @@ const mockBatchData: DeliveryBatch = {
   estimatedTotalDistance: '12.5 km',
 };
 
-const HomePage: NextPage = () => {
+// It's good practice to wrap components that use useSearchParams in Suspense
+// However, for a page-level component, Next.js might handle this implicitly.
+// For explicit control, especially if parts of the page render sooner:
+const HomePageContent: NextPage = () => {
   const router = useRouter();
-  const [isOnline, setIsOnline] = useState(false);
-  const [driverName] = useState("Alex Ryder"); // Placeholder
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
 
-  // States for active delivery
+  const [isOnline, setIsOnline] = useState(false);
+  const [driverName] = useState("Alex Ryder"); 
+
   const [currentDelivery, setCurrentDelivery] = useState<DeliveryBatch | null>(null);
   const [currentStopIndex, setCurrentStopIndex] = useState(0);
   const [stopStatuses, setStopStatuses] = useState<Record<string, OrderStop['status']>>({});
@@ -58,7 +63,23 @@ const HomePage: NextPage = () => {
   const [gpsError, setGpsError] = useState<string | null>(null);
   const [showProofUpload, setShowProofUpload] = useState(false);
 
-  // Geolocation watcher
+  // Effect to handle auto-starting delivery from query parameters
+  useEffect(() => {
+    const autoStartParam = searchParams.get('autoStartDelivery');
+    const acceptedJobId = searchParams.get('jobId');
+
+    if (autoStartParam === 'true' && !isOnline && !currentDelivery) {
+      console.log(`Auto-starting delivery, triggered by job ID: ${acceptedJobId || 'any available'}`);
+      setIsOnline(true); // This triggers the effect below to load mockBatchData
+
+      // Clear the query parameters to prevent re-triggering
+      // router.replace takes the pathname and an optional 'as' path.
+      // Providing undefined for 'as' and { shallow: true } should work.
+      router.replace(pathname, undefined); // Using undefined here clears query params as per Next.js docs for App Router
+    }
+  }, [searchParams, isOnline, currentDelivery, setIsOnline, router, pathname]);
+
+
   useEffect(() => {
     if (typeof navigator !== 'undefined' && navigator.geolocation) {
       const watchId = navigator.geolocation.watchPosition(
@@ -77,29 +98,30 @@ const HomePage: NextPage = () => {
     }
   }, []);
 
-  // Effect for online status change
   useEffect(() => {
     if (isOnline) {
-      console.log("Driver online. Simulating fetching delivery data...");
-      setTimeout(() => {
-        // Simulate finding a delivery
-        setCurrentDelivery(mockBatchData);
-        const initialStatuses: Record<string, OrderStop['status']> = {};
-        mockBatchData.stops.forEach(stop => {
-          initialStatuses[stop.id] = stop.status;
-        });
-        setStopStatuses(initialStatuses);
-        setCurrentStopIndex(0); // Start from the first stop
-        setShowProofUpload(false);
-      }, 2000);
+      // If going online and no current delivery, simulate fetching one
+      if (!currentDelivery) { 
+        console.log("Driver online. Simulating fetching delivery data...");
+        setTimeout(() => {
+          setCurrentDelivery(mockBatchData);
+          const initialStatuses: Record<string, OrderStop['status']> = {};
+          mockBatchData.stops.forEach(stop => {
+            initialStatuses[stop.id] = stop.status;
+          });
+          setStopStatuses(initialStatuses);
+          setCurrentStopIndex(0); 
+          setShowProofUpload(false);
+        }, 1000); // Simulate network delay
+      }
     } else {
+      // If going offline, clear delivery data
       setCurrentDelivery(null);
-      // Optionally reset other states if needed when going offline
       setStopStatuses({});
       setCurrentStopIndex(0);
       setShowProofUpload(false);
     }
-  }, [isOnline]);
+  }, [isOnline, currentDelivery]); // currentDelivery added to dep array to prevent re-fetch if already set
 
   const currentStop = useMemo(() => {
     if (!currentDelivery) return null;
@@ -125,21 +147,20 @@ const HomePage: NextPage = () => {
         if (currentStatus === 'pending') nextStatus = 'arrived_at_dropoff';
         else if (currentStatus === 'arrived_at_dropoff') {
            setShowProofUpload(true);
-           return; // Status will be updated after proof
+           return; 
         }
         break;
     }
     
     if (nextStatus) {
       setStopStatuses(prev => ({ ...prev, [currentStop.id]: nextStatus! }));
-      if (nextStatus === 'picked_up') { // Only advance for 'picked_up'
+      if (nextStatus === 'picked_up') { 
         if (currentStopIndex < currentDelivery.stops.length - 1) {
           setCurrentStopIndex(prev => prev + 1);
         } else {
           console.log('Batch completed!');
-          // alert('Batch completed!'); // Placeholder for batch completion
-          setCurrentDelivery(null); // Clear current delivery, go back to "searching" state
-          // router.push('/'); // Or navigate to a summary page if one exists
+          setCurrentDelivery(null); 
+          // setIsOnline(false); // Optionally go offline after batch completion
         }
       }
     }
@@ -153,9 +174,8 @@ const HomePage: NextPage = () => {
       setCurrentStopIndex(prev => prev + 1);
     } else {
       console.log('Batch completed!');
-      // alert('Batch completed!');
-      setCurrentDelivery(null); // Clear current delivery
-      // router.push('/');
+      setCurrentDelivery(null);
+      // setIsOnline(false); // Optionally go offline
     }
   };
 
@@ -194,7 +214,6 @@ const HomePage: NextPage = () => {
 
   return (
     <div className="flex flex-col h-screen overflow-hidden">
-      {/* Header */}
       <header className="sticky top-0 z-30 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto h-16 flex items-center justify-between px-4">
           <h1 className="text-xl font-bold text-primary truncate flex-1">
@@ -218,10 +237,8 @@ const HomePage: NextPage = () => {
         </div>
       </header>
 
-      {/* Main Content Area */}
       {isOnline && currentDelivery ? (
-        // Active Delivery View
-        <div className="flex-grow flex flex-col" style={{ height: 'calc(100vh - 4rem - 4rem)'}}> {/* Adjust for header and navbar */}
+        <div className="flex-grow flex flex-col" style={{ height: 'calc(100vh - 4rem - 4rem)'}}> 
           <div className="bg-muted" style={{ height: '65%', position: 'relative' }}>
             {gpsError && (
               <div className="absolute top-2 left-2 right-2 z-10">
@@ -232,13 +249,12 @@ const HomePage: NextPage = () => {
                 </Alert>
               </div>
             )}
-            {/* Map takes full space of this div */}
             <DynamicMapDisplay
               driverLocation={driverLocation}
               stops={currentDelivery.stops}
               currentStopId={currentStop?.id}
             />
-             {!gpsError && !driverLocation && ( // Show only if map is not showing error and no location yet
+             {!gpsError && !driverLocation && ( 
               <div className="absolute inset-0 flex items-center justify-center text-muted-foreground bg-muted/80 z-20">
                 <NavigationIcon className="w-8 h-8 mr-2 animate-pulse" /> Acquiring GPS signal...
               </div>
@@ -305,7 +321,7 @@ const HomePage: NextPage = () => {
                                       stopStatuses[stop.id] === 'picked_up' ? 'bg-blue-600 hover:bg-blue-700 text-white' :
                                       (stop.id === currentStop?.id && stopStatuses[stop.id] === 'pending') ? 'bg-orange-500 hover:bg-orange-600 text-white' : 
                                       (stop.id === currentStop?.id && (stopStatuses[stop.id] === 'arrived_at_pickup' || stopStatuses[stop.id] === 'arrived_at_dropoff')) ? 'bg-yellow-500 hover:bg-yellow-600 text-black' : 
-                                      '' // Default outline if none of above
+                                      '' 
                                     }`}>
                               {stopStatuses[stop.id]?.replace(/_/g, ' ') || 'Unknown'}
                             </Badge>
@@ -334,13 +350,11 @@ const HomePage: NextPage = () => {
           </div>
         </div>
       ) : (
-        // Idle View (Map background + Info Card)
         <div className="relative flex-grow">
           <div className="absolute inset-0 z-0">
             <DynamicMapDisplay driverLocation={driverLocation} />
           </div>
           <main className="absolute top-0 left-0 right-0 bottom-0 p-4 overflow-y-auto space-y-4 z-10 flex items-center justify-center">
-            {/* Centered card */}
             <Card className="shadow-lg rounded-lg bg-card/95 backdrop-blur-sm w-full max-w-sm">
               <CardContent className="pt-6">
                 {isOnline ? (
@@ -356,6 +370,15 @@ const HomePage: NextPage = () => {
 
       <BottomNavbar />
     </div>
+  );
+};
+
+// Wrapper component to ensure Suspense is used correctly with useSearchParams
+const HomePage: NextPage = () => {
+  return (
+    <Suspense fallback={<div className="flex h-screen w-screen items-center justify-center">Loading page...</div>}>
+      <HomePageContent />
+    </Suspense>
   );
 };
 
