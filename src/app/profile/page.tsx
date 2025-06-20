@@ -5,7 +5,7 @@ import type { NextPage } from 'next';
 import BottomNavbar from '@/components/BottomNavbar';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { UserCircle2, Mail, Smartphone, Truck, Edit3, ShieldAlertIcon } from 'lucide-react';
+import { UserCircle2, Truck, Edit3, ShieldAlertIcon, DollarSignIcon, TrendingUpIcon, CalendarDaysIcon } from 'lucide-react';
 import Image from 'next/image';
 
 const ProfilePage: NextPage = () => {
@@ -70,6 +70,44 @@ const ProfilePage: NextPage = () => {
               </Button>
             </CardFooter>
           </Card>
+
+          <Card className="overflow-hidden shadow-md">
+            <CardHeader className="p-6">
+              <CardTitle className="text-xl font-semibold flex items-center text-primary">
+                <DollarSignIcon className="mr-2 h-6 w-6" /> Earnings Summary
+              </CardTitle>
+              <CardDescription>Your recent earnings activity.</CardDescription>
+            </CardHeader>
+            <CardContent className="p-6 space-y-4 text-sm">
+              <div className="flex justify-between items-center p-3 bg-muted/30 rounded-md">
+                <div className="flex items-center">
+                  <CalendarDaysIcon className="mr-3 h-5 w-5 text-muted-foreground" />
+                  <span className="text-foreground">This Week:</span>
+                </div>
+                <span className="font-semibold text-accent-foreground">$250.75</span>
+              </div>
+              <div className="flex justify-between items-center p-3 bg-muted/30 rounded-md">
+                 <div className="flex items-center">
+                  <CalendarDaysIcon className="mr-3 h-5 w-5 text-muted-foreground" />
+                  <span className="text-foreground">Last Week:</span>
+                </div>
+                <span className="font-semibold text-accent-foreground">$480.50</span>
+              </div>
+              <div className="flex justify-between items-center p-3 bg-muted/30 rounded-md">
+                 <div className="flex items-center">
+                  <TrendingUpIcon className="mr-3 h-5 w-5 text-muted-foreground" />
+                  <span className="text-foreground">Total Earned:</span>
+                </div>
+                <span className="font-semibold text-accent-foreground">$5,820.00</span>
+              </div>
+            </CardContent>
+            <CardFooter className="bg-muted/50 p-4 border-t">
+              <Button className="w-full" variant="outline">
+                View Payout History
+              </Button>
+            </CardFooter>
+          </Card>
+
         </div>
       </main>
       <BottomNavbar />

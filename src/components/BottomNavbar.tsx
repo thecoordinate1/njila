@@ -2,7 +2,7 @@
 'use client';
 
 import type React from 'react';
-import { HomeIcon, BriefcaseIcon, HistoryIcon } from 'lucide-react'; // Changed icons
+import { HomeIcon, BriefcaseIcon, HistoryIcon, UserIcon } from 'lucide-react'; // Added UserIcon
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -12,8 +12,9 @@ const BottomNavbar: React.FC = () => {
 
   const navItems = [
     { href: '/', icon: HomeIcon, label: 'Home' },
-    { href: '/jobs', icon: BriefcaseIcon, label: 'Jobs' }, // Changed to /jobs
-    { href: '/history', icon: HistoryIcon, label: 'History' }, // Changed to /history
+    { href: '/jobs', icon: BriefcaseIcon, label: 'Jobs' },
+    { href: '/history', icon: HistoryIcon, label: 'History' },
+    { href: '/profile', icon: UserIcon, label: 'Profile' }, // Added Profile
   ];
 
   const navItemClasses = (path: string, currentPathname: string) =>
