@@ -254,6 +254,7 @@ const MapDisplay: React.FC<MapDisplayProps> = ({ orderCoordinates, driverLocatio
       zoom={defaultZoomLevel}
       scrollWheelZoom={true}
       style={{ height: '100%', width: '100%' }}
+      attributionControl={false} // Hide the attribution control
     >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | Routing by <a href="https://openrouteservice.org/">OpenRouteService</a>'
