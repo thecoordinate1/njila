@@ -45,9 +45,6 @@ const mockBatchData: DeliveryBatch = {
   estimatedTotalDistance: '18.5 km',
 };
 
-// It's good practice to wrap components that use useSearchParams in Suspense
-// However, for a page-level component, Next.js might handle this implicitly.
-// For explicit control, especially if parts of the page render sooner:
 const HomePageContent: NextPage = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -63,17 +60,16 @@ const HomePageContent: NextPage = () => {
   const [gpsError, setGpsError] = useState<string | null>(null);
   const [showProofUpload, setShowProofUpload] = useState(false);
 
-  // Effect to handle auto-starting delivery from query parameters
   useEffect(() => {
     const autoStartParam = searchParams.get('autoStartDelivery');
     const acceptedJobId = searchParams.get('jobId');
 
     if (autoStartParam === 'true' && !isOnline && !currentDelivery) {
       console.log(`Auto-starting delivery, triggered by job ID: ${acceptedJobId || 'any available'}`);
-      setIsOnline(true); // This triggers the effect below to load mockBatchData
+      setIsOnline(true); 
 
-      // Clear the query parameters to prevent re-triggering
-      router.replace(pathname, undefined); 
+      const newPath = pathname; // Keep current path, remove query params
+      router.replace(newPath, undefined); 
     }
   }, [searchParams, isOnline, currentDelivery, setIsOnline, router, pathname]);
 
@@ -86,19 +82,38 @@ const HomePageContent: NextPage = () => {
           setGpsError(null);
         },
         (error) => {
-          console.error('Error getting geolocation:', error);
-          setGpsError(error.message || 'Unable to retrieve location. GPS might be disabled.');
+          console.error('Detailed geolocation error:', error);
+          let errorMessage = 'Unable to retrieve location. GPS might be disabled or permissions denied.';
+          if (error && error.message) {
+            errorMessage = error.message;
+          } else if (error && error.code) {
+            switch (error.code) {
+              case error.PERMISSION_DENIED:
+                errorMessage = "Geolocation permission denied.";
+                break;
+              case error.POSITION_UNAVAILABLE:
+                errorMessage = "Location information is unavailable.";
+                break;
+              case error.TIMEOUT:
+                errorMessage = "The request to get user location timed out.";
+                break;
+              default:
+                errorMessage = `An unknown error occurred (Code: ${error.code}).`;
+            }
+          }
+          setGpsError(errorMessage);
           setDriverLocation(null);
         },
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
       );
       return () => navigator.geolocation.clearWatch(watchId);
+    } else {
+        setGpsError("Geolocation is not supported by this browser.");
     }
   }, []);
 
   useEffect(() => {
     if (isOnline) {
-      // If going online and no current delivery, simulate fetching one
       if (!currentDelivery) { 
         console.log("Driver online. Simulating fetching delivery data...");
         setTimeout(() => {
@@ -110,16 +125,15 @@ const HomePageContent: NextPage = () => {
           setStopStatuses(initialStatuses);
           setCurrentStopIndex(0); 
           setShowProofUpload(false);
-        }, 1000); // Simulate network delay
+        }, 1000); 
       }
     } else {
-      // If going offline, clear delivery data
       setCurrentDelivery(null);
       setStopStatuses({});
       setCurrentStopIndex(0);
       setShowProofUpload(false);
     }
-  }, [isOnline, currentDelivery]); // currentDelivery added to dep array to prevent re-fetch if already set
+  }, [isOnline, currentDelivery]); 
 
   const currentStop = useMemo(() => {
     if (!currentDelivery) return null;
@@ -158,7 +172,6 @@ const HomePageContent: NextPage = () => {
         } else {
           console.log('Batch completed!');
           setCurrentDelivery(null); 
-          // setIsOnline(false); // Optionally go offline after batch completion
         }
       }
     }
@@ -173,7 +186,6 @@ const HomePageContent: NextPage = () => {
     } else {
       console.log('Batch completed!');
       setCurrentDelivery(null);
-      // setIsOnline(false); // Optionally go offline
     }
   };
 
@@ -356,10 +368,21 @@ const HomePageContent: NextPage = () => {
             <Card className="shadow-lg rounded-lg bg-card/95 backdrop-blur-sm w-full max-w-sm">
               <CardContent className="pt-6">
                 {isOnline ? (
+                   gpsError ? 
+                   <Alert variant="destructive" className="mb-4">
+                     <AlertTriangleIcon className="h-4 w-4" />
+                     <AlertTitle>GPS Error</AlertTitle>
+                     <AlertDescription>{gpsError}</AlertDescription>
+                   </Alert> :
                   <p className="text-center text-muted-foreground">Looking for deliveries...</p>
                 ) : (
                   <p className="text-center text-muted-foreground">You are offline. Go online to find deliveries.</p>
                 )}
+                 {isOnline && !gpsError && !driverLocation && ( 
+                    <div className="flex items-center justify-center text-muted-foreground">
+                        <NavigationIcon className="w-5 h-5 mr-2 animate-pulse" /> Acquiring GPS signal...
+                    </div>
+                 )}
               </CardContent>
             </Card>
           </main>
@@ -371,7 +394,6 @@ const HomePageContent: NextPage = () => {
   );
 };
 
-// Wrapper component to ensure Suspense is used correctly with useSearchParams
 const HomePage: NextPage = () => {
   return (
     <Suspense fallback={<div className="flex h-screen w-screen items-center justify-center">Loading page...</div>}>
