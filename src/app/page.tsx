@@ -67,6 +67,18 @@ const HomePageContent: NextPage = () => {
   const [deliveryCode, setDeliveryCode] = useState('');
   const [validationStatus, setValidationStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
 
+  useEffect(() => {
+    // On component mount, read the status from localStorage to persist state across refreshes.
+    const savedStatus = localStorage.getItem('driverIsOnline');
+    if (savedStatus) {
+      try {
+        setIsOnline(JSON.parse(savedStatus));
+      } catch (e) {
+        console.error("Failed to parse 'driverIsOnline' from localStorage", e);
+      }
+    }
+  }, []); // The empty dependency array ensures this effect runs only once on mount.
+
 
   useEffect(() => {
     const autoStartParam = searchParams.get('autoStartDelivery');
@@ -74,12 +86,14 @@ const HomePageContent: NextPage = () => {
 
     if (autoStartParam === 'true' && !isOnline && !currentDelivery) {
       console.log(`Auto-starting delivery, triggered by job ID: ${acceptedJobId || 'any available'}`);
-      setIsOnline(true); 
+      
+      // We call the toggle handler here to ensure localStorage is updated correctly
+      handleToggleOnline(true);
 
       const newPath = pathname; 
       router.replace(newPath, undefined); 
     }
-  }, [searchParams, isOnline, currentDelivery, setIsOnline, router, pathname]);
+  }, [searchParams, isOnline, currentDelivery, router, pathname]);
 
 
   useEffect(() => {
@@ -167,8 +181,9 @@ const HomePageContent: NextPage = () => {
     return currentDelivery.stops[currentStopIndex];
   }, [currentDelivery, currentStopIndex]);
 
-  const handleToggleOnline = () => {
-    setIsOnline(!isOnline);
+  const handleToggleOnline = (checked: boolean) => {
+    setIsOnline(checked);
+    localStorage.setItem('driverIsOnline', JSON.stringify(checked));
   };
 
   const handleStatusUpdate = () => {
@@ -302,8 +317,8 @@ const HomePageContent: NextPage = () => {
       </header>
 
       {isOnline && currentDelivery ? (
-        <div className="group flex flex-col" style={{ height: 'calc(100vh - 4rem - 4rem)'}}> 
-          <div className="bg-muted relative h-1/2 transition-all duration-300 ease-in-out md:h-2/3 md:group-hover:h-1/2">
+        <div className="group flex flex-col md:flex-row" style={{ height: 'calc(100vh - 4rem - 4rem)'}}> 
+          <div className="bg-muted relative h-1/2 md:h-full md:w-2/3 transition-all duration-300 ease-in-out group-hover:md:w-1/2">
             {gpsError && (
               <div className="absolute top-2 left-2 right-2 z-10">
                 <Alert variant="destructive">
@@ -326,7 +341,7 @@ const HomePageContent: NextPage = () => {
             )}
           </div>
 
-          <div className="bg-background shadow-t-lg flex h-1/2 flex-col overflow-hidden transition-all duration-300 ease-in-out md:h-1/3 md:group-hover:h-1/2">
+          <div className="bg-background shadow-t-lg flex h-1/2 md:h-full md:w-1/3 flex-col overflow-hidden transition-all duration-300 ease-in-out group-hover:md:w-1/2">
             {showConfirmationScreen && currentStop ? (
               <Card className="m-2 flex-grow overflow-y-auto shadow-none border-none rounded-none">
                 <CardHeader className="py-3 px-4">
