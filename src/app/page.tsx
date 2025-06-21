@@ -61,6 +61,7 @@ const HomePageContent: NextPage = () => {
   const [driverLocation, setDriverLocation] = useState<LatLngExpression | null>(null);
   const [gpsError, setGpsError] = useState<string | null>(null);
   const [showConfirmationScreen, setShowConfirmationScreen] = useState(false);
+  const [orderCoordinates, setOrderCoordinates] = useState<{ pickup: LatLngExpression; destination: LatLngExpression; } | null>(null);
 
   // State for Code Validation
   const [deliveryCode, setDeliveryCode] = useState('');
@@ -79,6 +80,21 @@ const HomePageContent: NextPage = () => {
       router.replace(newPath, undefined); 
     }
   }, [searchParams, isOnline, currentDelivery, setIsOnline, router, pathname]);
+
+
+  useEffect(() => {
+    const pLat = searchParams.get('pickupLat');
+    const pLng = searchParams.get('pickupLng');
+    const dLat = searchParams.get('destLat');
+    const dLng = searchParams.get('destLng');
+
+    if (pLat && pLng && dLat && dLng) {
+        setOrderCoordinates({
+            pickup: [parseFloat(pLat), parseFloat(pLng)],
+            destination: [parseFloat(dLat), parseFloat(dLng)],
+        });
+    }
+  }, [searchParams]);
 
 
   useEffect(() => {
@@ -299,6 +315,7 @@ const HomePageContent: NextPage = () => {
               driverLocation={driverLocation}
               stops={currentDelivery.stops}
               currentStopId={currentStop?.id}
+              orderCoordinates={orderCoordinates}
             />
              {!gpsError && !driverLocation && ( 
               <div className="absolute inset-0 flex items-center justify-center text-muted-foreground bg-muted/80 z-20">
@@ -427,7 +444,10 @@ const HomePageContent: NextPage = () => {
       ) : (
         <div className="relative flex-grow">
           <div className="absolute inset-0 z-0">
-            <DynamicMapDisplay driverLocation={driverLocation} />
+            <DynamicMapDisplay 
+                driverLocation={driverLocation} 
+                orderCoordinates={orderCoordinates}
+            />
           </div>
           <main className="absolute top-0 left-0 right-0 bottom-0 p-4 overflow-y-auto space-y-4 z-10 flex items-center justify-center">
             <Card className="shadow-lg rounded-lg bg-card/95 backdrop-blur-sm w-full max-w-sm">
