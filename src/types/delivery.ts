@@ -8,7 +8,7 @@ export interface OrderStop {
   status: 'pending' | 'arrived_at_pickup' | 'picked_up' | 'arrived_at_dropoff' | 'delivered' | 'failed';
   sequence: number;
   items?: string[]; // Optional: list of item names/IDs for this stop
-  contactName?: string;
+  customerName?: string;
   contactPhone?: string;
 }
 

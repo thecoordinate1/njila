@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Switch } from '@/components/ui/switch';
+import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import {
   PackageIcon,
   MapPinIcon,
@@ -16,19 +17,14 @@ import {
   CheckCircle2Icon,
   NavigationIcon,
   AlertTriangleIcon,
-  CameraIcon,
-  Edit2Icon,
-  ChevronLeftIcon,
   ListOrderedIcon,
   HomeIcon,
-  EraserIcon,
+  XCircleIcon,
 } from 'lucide-react';
 import type { NextPage } from 'next';
 import type { DeliveryBatch, OrderStop } from '@/types/delivery';
 import type { LatLngExpression } from 'leaflet';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
-import Image from 'next/image';
-import SignatureCanvas from 'react-signature-canvas';
 
 const DynamicMapDisplay = dynamic(() => import('@/components/MapDisplay'), {
   ssr: false,
@@ -40,13 +36,16 @@ const mockBatchData: DeliveryBatch = {
   label: 'Lusaka Central Drops',
   stops: [
     { id: 'LSK_S1', type: 'pickup', address: 'Kamwala Market, Independence Ave, Lusaka', shortAddress: 'Kamwala Market', coordinates: [-15.4320, 28.2910], status: 'pending', sequence: 1, items: ['Groceries Basket'] },
-    { id: 'LSK_S2', type: 'dropoff', address: 'EastPark Mall, Great East Rd, Lusaka', shortAddress: 'EastPark Mall', coordinates: [-15.3990, 28.3410], status: 'pending', sequence: 2, items: ['Groceries Basket'] },
+    { id: 'LSK_S2', type: 'dropoff', address: 'EastPark Mall, Great East Rd, Lusaka', shortAddress: 'EastPark Mall', coordinates: [-15.3990, 28.3410], status: 'pending', sequence: 2, items: ['Groceries Basket'], customerName: 'Miriam Banda' },
     { id: 'LSK_S3', type: 'pickup', address: 'University Teaching Hospital (UTH), Nationalist Rd, Lusaka', shortAddress: 'UTH Lusaka', coordinates: [-15.4050, 28.3000], status: 'pending', sequence: 3, items: ['Medical Supplies'] },
-    { id: 'LSK_S4', type: 'dropoff', address: 'Manda Hill Mall, Great East Rd, Lusaka', shortAddress: 'Manda Hill Mall', coordinates: [-15.4020, 28.3190], status: 'pending', sequence: 4, items: ['Medical Supplies'] },
+    { id: 'LSK_S4', type: 'dropoff', address: 'Manda Hill Mall, Great East Rd, Lusaka', shortAddress: 'Manda Hill Mall', coordinates: [-15.4020, 28.3190], status: 'pending', sequence: 4, items: ['Medical Supplies'], customerName: 'John Phiri' },
   ],
   estimatedTotalTime: '1hr 30mins',
   estimatedTotalDistance: '18.5 km',
 };
+
+// Hardcoded correct delivery code for simulation
+const CORRECT_DELIVERY_CODE = "123456";
 
 const HomePageContent: NextPage = () => {
   const router = useRouter();
@@ -61,12 +60,12 @@ const HomePageContent: NextPage = () => {
   const [stopStatuses, setStopStatuses] = useState<Record<string, OrderStop['status']>>({});
   const [driverLocation, setDriverLocation] = useState<LatLngExpression | null>(null);
   const [gpsError, setGpsError] = useState<string | null>(null);
-  const [showProofUpload, setShowProofUpload] = useState(false);
+  const [showConfirmationScreen, setShowConfirmationScreen] = useState(false);
 
-  // State for Proof of Delivery
-  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
-  const [photoFile, setPhotoFile] = useState<File | null>(null);
-  const sigCanvasRef = useRef<SignatureCanvas>(null);
+  // State for Code Validation
+  const [deliveryCode, setDeliveryCode] = useState('');
+  const [validationStatus, setValidationStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+
 
   useEffect(() => {
     const autoStartParam = searchParams.get('autoStartDelivery');
@@ -134,14 +133,14 @@ const HomePageContent: NextPage = () => {
           });
           setStopStatuses(initialStatuses);
           setCurrentStopIndex(0); 
-          setShowProofUpload(false);
+          setShowConfirmationScreen(false);
         }, 1000); 
       }
     } else {
       setCurrentDelivery(null);
       setStopStatuses({});
       setCurrentStopIndex(0);
-      setShowProofUpload(false);
+      setShowConfirmationScreen(false);
     }
   }, [isOnline, currentDelivery]); 
 
@@ -168,7 +167,9 @@ const HomePageContent: NextPage = () => {
       case 'dropoff':
         if (currentStatus === 'pending') nextStatus = 'arrived_at_dropoff';
         else if (currentStatus === 'arrived_at_dropoff') {
-           setShowProofUpload(true);
+           setShowConfirmationScreen(true);
+           setValidationStatus('idle');
+           setDeliveryCode('');
            return; 
         }
         break;
@@ -187,53 +188,49 @@ const HomePageContent: NextPage = () => {
     }
   };
 
-  const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files[0]) {
-      const file = event.target.files[0];
-      setPhotoFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPhotoPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
 
-  const handleClearSignature = () => {
-    sigCanvasRef.current?.clear();
-  };
-
-  const handleProofSubmitted = () => {
+  const handleCodeVerification = () => {
     if (!currentDelivery || !currentStop) return;
     
-    const signatureData = sigCanvasRef.current?.isEmpty() ? null : sigCanvasRef.current?.toDataURL();
-
-    console.log("Submitting Proof of Delivery...");
-    console.log("Photo File:", photoFile);
-    console.log("Signature Data URL (trimmed):", signatureData ? signatureData.substring(0, 50) + '...' : "No signature");
-
-    setStopStatuses(prev => ({ ...prev, [currentStop.id]: 'delivered' }));
-    setShowProofUpload(false);
+    setValidationStatus('loading');
     
-    // Reset proof states for the next delivery
-    setPhotoPreview(null);
-    setPhotoFile(null);
-    sigCanvasRef.current?.clear();
+    // Simulate API call
+    setTimeout(() => {
+      if (deliveryCode === CORRECT_DELIVERY_CODE) {
+        setValidationStatus('success');
+        
+        setTimeout(() => {
+          // Update status and move to next stop
+          setStopStatuses(prev => ({ ...prev, [currentStop.id]: 'delivered' }));
+          setShowConfirmationScreen(false);
+          setDeliveryCode('');
+          setValidationStatus('idle');
+          
+          if (currentStopIndex < currentDelivery.stops.length - 1) {
+            setCurrentStopIndex(prev => prev + 1);
+          } else {
+            console.log('Batch completed!');
+            setCurrentDelivery(null);
+          }
+        }, 1500); // Show success message for a bit
 
-    if (currentStopIndex < currentDelivery.stops.length - 1) {
-      setCurrentStopIndex(prev => prev + 1);
-    } else {
-      console.log('Batch completed!');
-      setCurrentDelivery(null);
-    }
+      } else {
+        setValidationStatus('error');
+      }
+    }, 1000);
   };
 
   const getActionButtonConfig = () => {
     if (!currentStop) return { text: 'Loading...', disabled: true, action: () => {} };
     const status = stopStatuses[currentStop.id];
 
-    if (showProofUpload) {
-        return { text: 'Confirm Delivery', disabled: !photoFile, action: handleProofSubmitted, icon: CheckCircle2Icon };
+    if (showConfirmationScreen) {
+        return { 
+          text: 'Verify and Complete Delivery', 
+          disabled: deliveryCode.length !== 6 || validationStatus === 'loading' || validationStatus === 'success', 
+          action: handleCodeVerification, 
+          icon: CheckCircle2Icon 
+        };
     }
 
     switch (currentStop.type) {
@@ -244,7 +241,7 @@ const HomePageContent: NextPage = () => {
         break;
       case 'dropoff':
         if (status === 'pending') return { text: 'Arrived at Dropoff', disabled: !driverLocation, action: handleStatusUpdate, icon: NavigationIcon };
-        if (status === 'arrived_at_dropoff') return { text: 'Deliver Items & Get Proof', disabled: false, action: handleStatusUpdate, icon: PackageIcon };
+        if (status === 'arrived_at_dropoff') return { text: 'Confirm Delivery', disabled: false, action: handleStatusUpdate, icon: PackageIcon };
         if (status === 'delivered') return { text: 'Dropoff Complete', disabled: true, action: () => {}, icon: CheckCircle2Icon };
         break;
     }
@@ -311,51 +308,54 @@ const HomePageContent: NextPage = () => {
           </div>
 
           <div className="bg-background shadow-t-lg" style={{ height: '35%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-            {showProofUpload && currentStop ? (
+            {showConfirmationScreen && currentStop ? (
               <Card className="m-2 flex-grow overflow-y-auto shadow-none border-none rounded-none">
                 <CardHeader className="py-3 px-4">
                   <CardTitle className="text-base flex items-center">
                     <PackageIcon className="mr-2 h-5 w-5 text-primary" />
-                    Proof of Delivery: {currentStop.shortAddress}
+                    Confirm Delivery: {currentStop.shortAddress}
                   </CardTitle>
-                  <CardDescription className="text-xs pt-1">For items: {currentStop.items?.join(', ')}</CardDescription>
+                  <CardDescription className="text-xs pt-1">To: {currentStop.customerName || 'Customer'}</CardDescription>
                 </CardHeader>
-                <CardContent className="px-4 pb-4 space-y-4 text-sm">
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">Photo Proof</label>
-                    <div className="w-full aspect-video bg-muted rounded-md flex items-center justify-center relative overflow-hidden border">
-                      {photoPreview ? (
-                        <Image src={photoPreview} alt="Proof of delivery" layout="fill" objectFit="cover" />
-                      ) : (
-                        <span className="text-muted-foreground text-xs">Photo Preview</span>
-                      )}
-                    </div>
-                    <Button asChild variant="outline" className="w-full mt-2">
-                      <label htmlFor="photoProof" className="cursor-pointer flex items-center justify-center">
-                        <CameraIcon className="mr-2 h-4 w-4" />
-                        {photoPreview ? 'Retake' : 'Take'} Photo
-                      </label>
-                    </Button>
-                    <input type="file" id="photoProof" accept="image/*" capture="environment" className="sr-only" onChange={handlePhotoChange} />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">Recipient Signature</label>
-                    <div className="relative w-full h-32 rounded-md border bg-white">
-                      <SignatureCanvas
-                        ref={sigCanvasRef}
-                        penColor='black'
-                        canvasProps={{ className: 'w-full h-full rounded-md' }}
-                      />
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="absolute top-1 right-1 h-7 w-7"
-                        onClick={handleClearSignature}
-                        aria-label="Clear signature"
-                      >
-                        <EraserIcon className="h-4 w-4" />
-                      </Button>
-                    </div>
+                <CardContent className="px-4 pb-4 space-y-4 text-sm flex flex-col items-center">
+                  <label htmlFor="delivery-code" className="text-sm font-medium text-foreground text-center">
+                    Enter the 6-digit code from the customer
+                  </label>
+                  <div className="flex flex-col items-center space-y-4">
+                    <InputOTP
+                      maxLength={6}
+                      value={deliveryCode}
+                      onChange={(value) => {
+                        setDeliveryCode(value);
+                        setValidationStatus('idle'); // Reset validation on change
+                      }}
+                      disabled={validationStatus === 'loading' || validationStatus === 'success'}
+                    >
+                      <InputOTPGroup>
+                        <InputOTPSlot index={0} />
+                        <InputOTPSlot index={1} />
+                        <InputOTPSlot index={2} />
+                        <InputOTPSlot index={3} />
+                        <InputOTPSlot index={4} />
+                        <InputOTPSlot index={5} />
+                      </InputOTPGroup>
+                    </InputOTP>
+
+                    {validationStatus === 'success' && (
+                       <div className="flex items-center text-green-600 font-semibold text-center">
+                         <CheckCircle2Icon className="h-5 w-5 mr-2 animate-pulse" /> Delivery Confirmed!
+                       </div>
+                    )}
+                    {validationStatus === 'error' && (
+                       <div className="flex items-center text-red-600 font-semibold text-center">
+                         <XCircleIcon className="h-5 w-5 mr-2" /> Invalid code. Please try again.
+                       </div>
+                    )}
+                     {validationStatus === 'loading' && (
+                       <div className="flex items-center text-muted-foreground font-semibold text-center">
+                         <NavigationIcon className="h-5 w-5 mr-2 animate-spin" /> Verifying...
+                       </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
