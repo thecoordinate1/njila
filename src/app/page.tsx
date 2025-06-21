@@ -93,8 +93,10 @@ const HomePageContent: NextPage = () => {
             pickup: [parseFloat(pLat), parseFloat(pLng)],
             destination: [parseFloat(dLat), parseFloat(dLng)],
         });
+        const newPath = pathname;
+        router.replace(newPath, undefined);
     }
-  }, [searchParams]);
+  }, [searchParams, router, pathname]);
 
 
   useEffect(() => {
@@ -300,7 +302,7 @@ const HomePageContent: NextPage = () => {
       </header>
 
       {isOnline && currentDelivery ? (
-        <div className="flex-grow flex flex-col" style={{ height: 'calc(100vh - 4rem - 4rem)'}}> 
+        <div className="flex flex-col" style={{ height: 'calc(100vh - 4rem - 4rem)'}}> 
           <div className="bg-muted" style={{ height: '65%', position: 'relative' }}>
             {gpsError && (
               <div className="absolute top-2 left-2 right-2 z-10">
