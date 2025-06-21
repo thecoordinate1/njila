@@ -302,8 +302,8 @@ const HomePageContent: NextPage = () => {
       </header>
 
       {isOnline && currentDelivery ? (
-        <div className="flex flex-col" style={{ height: 'calc(100vh - 4rem - 4rem)'}}> 
-          <div className="bg-muted" style={{ height: '65%', position: 'relative' }}>
+        <div className="group flex flex-col" style={{ height: 'calc(100vh - 4rem - 4rem)'}}> 
+          <div className="bg-muted relative h-1/2 transition-all duration-300 ease-in-out md:h-2/3 md:group-hover:h-1/2">
             {gpsError && (
               <div className="absolute top-2 left-2 right-2 z-10">
                 <Alert variant="destructive">
@@ -326,7 +326,7 @@ const HomePageContent: NextPage = () => {
             )}
           </div>
 
-          <div className="bg-background shadow-t-lg" style={{ height: '35%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <div className="bg-background shadow-t-lg flex h-1/2 flex-col overflow-hidden transition-all duration-300 ease-in-out md:h-1/3 md:group-hover:h-1/2">
             {showConfirmationScreen && currentStop ? (
               <Card className="m-2 flex-grow overflow-y-auto shadow-none border-none rounded-none">
                 <CardHeader className="py-3 px-4">
