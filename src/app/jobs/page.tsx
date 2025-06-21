@@ -2,7 +2,7 @@
 'use client';
 
 import type { NextPage } from 'next';
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation'; 
 import BottomNavbar from '@/components/BottomNavbar';
 import {
@@ -23,6 +23,7 @@ import {
   BriefcaseIcon,
   RouteIcon,
 } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
 
 interface Job {
   id: string;
@@ -35,61 +36,68 @@ interface Job {
   pickupAddress: string;
 }
 
-const mockJobsData: Job[] = [
-  {
-    id: 'JOB_LSK001',
-    title: 'Lusaka Express Consignment',
-    distance: '15.2 km',
-    time: '45 mins',
-    stops: 2,
-    payout: 120.0,
-    currency: 'USD', // Keep as USD for consistency unless amounts are ZMW
-    pickupAddress: 'Kamwala South Market, Off Chilumbulu Rd, Lusaka',
-  },
-  {
-    id: 'JOB_LSK002',
-    title: 'East Lusaka Food Delivery',
-    distance: '22.8 km',
-    time: '1hr 5 mins',
-    stops: 4,
-    payout: 180.5,
-    currency: 'USD',
-    pickupAddress: 'EastPark Mall, Main Entrance, Lusaka',
-  },
-  {
-    id: 'JOB_LSK003',
-    title: 'UTH Medical Supplies Run',
-    distance: '8.1 km',
-    time: '25 mins',
-    stops: 1,
-    payout: 75.0,
-    currency: 'USD',
-    pickupAddress: 'University Teaching Hospital (UTH) Pharmacy, Lusaka',
-  },
-];
-
 const JobsPage: NextPage = () => {
-  const [jobs, setJobs] = useState<Job[]>(mockJobsData);
-  const [isLoading, setIsLoading] = useState(false);
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAccepting, setIsAccepting] = useState<string | null>(null);
   const router = useRouter(); 
+  const supabase = createClient();
+
+  const fetchJobs = useCallback(async () => {
+    setIsLoading(true);
+    const { data, error } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('status', 'Pending');
+
+    if (error) {
+      console.error('Error fetching jobs:', error.message);
+      setJobs([]);
+    } else if (data) {
+      const formattedJobs = data.map((job: any) => ({
+        id: job.id.toString(),
+        title: job.title,
+        distance: job.distance,
+        time: job.time,
+        stops: job.stops,
+        payout: job.payout,
+        currency: job.currency,
+        pickupAddress: job.pickup_address,
+      }));
+      setJobs(formattedJobs);
+    }
+    setIsLoading(false);
+  }, [supabase]);
+
+  useEffect(() => {
+    fetchJobs();
+  }, [fetchJobs]);
 
   const handleRefreshJobs = () => {
-    setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      const shuffledJobs = [...mockJobsData].sort(() => Math.random() - 0.5);
-      setJobs(shuffledJobs);
-      setIsLoading(false);
-    }, 1000);
+    fetchJobs();
   };
 
-  const handleAcceptJob = (jobId: string) => {
+  const handleAcceptJob = async (jobId: string) => {
+    setIsAccepting(jobId);
     console.log(`Accepted job: ${jobId}`);
+
+    const { error } = await supabase
+      .from('orders')
+      .update({ status: 'in_progress' })
+      .eq('id', jobId);
+
+    if (error) {
+      console.error('Error updating job status:', error.message);
+      // Optionally, add user feedback here (e.g., a toast)
+      setIsAccepting(null);
+      return;
+    }
+
     router.push(`/?autoStartDelivery=true&jobId=${jobId}`);
   };
 
   const formatCurrency = (amount: number, currencyCode: string) => {
-    return new Intl.NumberFormat('en-US', { // Keep en-US for USD formatting
+    return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: currencyCode,
     }).format(amount);
@@ -120,7 +128,12 @@ const JobsPage: NextPage = () => {
       </header>
 
       <main className="flex-grow p-4 md:p-6 pb-24 space-y-6">
-        {jobs.length > 0 ? (
+        {isLoading ? (
+            <div className="text-center py-16">
+              <RefreshCwIcon className="mx-auto h-12 w-12 text-primary animate-spin mb-4" />
+              <p className="text-lg text-muted-foreground">Loading available jobs...</p>
+            </div>
+        ) : jobs.length > 0 ? (
           jobs.map((job) => (
             <Card key={job.id} className="overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 rounded-lg bg-card">
               <CardHeader className="pb-3 pt-5 px-5 bg-muted/20 border-b">
@@ -158,8 +171,14 @@ const JobsPage: NextPage = () => {
                   className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" 
                   size="lg"
                   onClick={() => handleAcceptJob(job.id)}
+                  disabled={isAccepting !== null}
                 >
-                  <PackageCheckIcon className="mr-2 h-5 w-5" /> Accept Job
+                  {isAccepting === job.id ? (
+                    <RefreshCwIcon className="mr-2 h-5 w-5 animate-spin" />
+                  ) : (
+                    <PackageCheckIcon className="mr-2 h-5 w-5" />
+                  )}
+                  {isAccepting === job.id ? 'Accepting...' : 'Accept Job'}
                 </Button>
               </CardFooter>
             </Card>
@@ -169,13 +188,11 @@ const JobsPage: NextPage = () => {
             <BriefcaseIcon className="mx-auto h-16 w-16 text-muted-foreground/70 mb-5" />
             <h3 className="text-2xl font-semibold mb-2 text-foreground/90">No Jobs Available</h3>
             <p className="text-sm text-muted-foreground px-4">
-              {isLoading ? 'Loading jobs...' : 'Check back soon or try refreshing the list.'}
+              Check back soon or try refreshing the list.
             </p>
-            {!isLoading && (
-               <Button variant="outline" onClick={handleRefreshJobs} className="mt-6">
+            <Button variant="outline" onClick={handleRefreshJobs} className="mt-6">
                 <RefreshCwIcon className="mr-2 h-4 w-4" /> Refresh Now
-              </Button>
-            )}
+            </Button>
           </div>
         )}
       </main>
