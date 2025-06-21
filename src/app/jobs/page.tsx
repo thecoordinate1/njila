@@ -97,9 +97,10 @@ const JobsPage: NextPage = () => {
   };
 
   const formatCurrency = (amount: number, currencyCode: string) => {
+    const safeCurrencyCode = currencyCode || 'USD'; // Provide a fallback currency
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: currencyCode,
+      currency: safeCurrencyCode,
     }).format(amount);
   };
 
