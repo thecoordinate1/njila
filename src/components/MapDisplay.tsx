@@ -188,6 +188,7 @@ const MapDisplay: React.FC<MapDisplayProps> = ({ orderCoordinates, driverLocatio
             'Authorization': YOUR_ORS_API_KEY,
             'Content-Type': 'application/json',
           },
+          timeout: 10000, // 10-second timeout
         });
         if (response.data && response.data.features && response.data.features.length > 0) {
           const routeCoords = response.data.features[0].geometry.coordinates;
@@ -198,7 +199,11 @@ const MapDisplay: React.FC<MapDisplayProps> = ({ orderCoordinates, driverLocatio
           setRoutePoints(null);
         }
       } catch (error) {
-        console.error('Error fetching multi-stop route from ORS:', error);
+        if (axios.isAxiosError(error) && error.code === 'ECONNABORTED') {
+          console.error('Error fetching multi-stop route from ORS: The request timed out.');
+        } else {
+          console.error('Error fetching multi-stop route from ORS:', error);
+        }
         setRoutePoints(null);
       }
     };
@@ -215,7 +220,7 @@ const MapDisplay: React.FC<MapDisplayProps> = ({ orderCoordinates, driverLocatio
         const end = `${destCoords[1]},${destCoords[0]}`;
         const url = `https://api.openrouteservice.org/v2/directions/driving-car?api_key=${YOUR_ORS_API_KEY}&start=${start}&end=${end}`;
         try {
-            const response = await axios.get(url);
+            const response = await axios.get(url, { timeout: 10000 }); // 10-second timeout
             if (response.data?.features?.[0]?.geometry?.coordinates) {
                 const coordinates = response.data.features[0].geometry.coordinates;
                 const leafletCoords: LatLngExpression[] = coordinates.map((coord: [number, number]) => [coord[1], coord[0]] as LatLngExpression);
@@ -224,7 +229,11 @@ const MapDisplay: React.FC<MapDisplayProps> = ({ orderCoordinates, driverLocatio
                 setRoutePoints(null);
             }
         } catch (error) {
-            console.error('Error fetching simple route from ORS:', error);
+            if (axios.isAxiosError(error) && error.code === 'ECONNABORTED') {
+              console.error('Error fetching simple route from ORS: The request timed out.');
+            } else {
+              console.error('Error fetching simple route from ORS:', error);
+            }
             setRoutePoints(null);
         }
     };
@@ -318,4 +327,3 @@ const MapDisplayWrapper: React.FC<MapDisplayProps> = (props) => {
 };
 
 export default MapDisplayWrapper;
-
