@@ -39,14 +39,14 @@ export async function middleware(request: NextRequest) {
   const publicStaticRoutes = ['/', '/about']; // Explicitly public routes
 
   // If user is not signed in and trying to access a protected route
-  if (!user && !authRoutes.includes(currentPath) && !publicStaticRoutes.includes(currentPath) && !currentPath.startsWith('/auth/callback')) {
-    return NextResponse.redirect(new URL('/login?message=Please sign in to access this page.', request.url));
-  }
+  // if (!user && !authRoutes.includes(currentPath) && !publicStaticRoutes.includes(currentPath) && !currentPath.startsWith('/auth/callback')) {
+  //   return NextResponse.redirect(new URL('/login?message=Please sign in to access this page.', request.url));
+  // }
 
   // If user is signed in and trying to access auth routes (login, signup)
-  if (user && authRoutes.includes(currentPath)) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
-  }
+  // if (user && authRoutes.includes(currentPath)) {
+  //   return NextResponse.redirect(new URL('/dashboard', request.url));
+  // }
 
   return response;
 }
