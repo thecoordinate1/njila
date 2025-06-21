@@ -238,16 +238,6 @@ const MapDisplay: React.FC<MapDisplayProps> = ({ orderCoordinates, driverLocatio
     }
   }, [driverLocation, pendingStops, orderCoordinates, isClient, YOUR_ORS_API_KEY]);
 
-  const mapKey = useMemo(() => {
-    let keyParts = ['map'];
-    if (driverLocation) keyParts.push(`driver-${(driverLocation as number[]).join('-')}`);
-    if (stops) keyParts.push(`stops-${stops.map(s => s.id).join('-')}`);
-    if (currentStopId) keyParts.push(`current-${currentStopId}`);
-    if (orderCoordinates) keyParts.push(`order-${(orderCoordinates.pickup as number[]).join('-')}-${(orderCoordinates.destination as number[]).join('-')}`);
-    return keyParts.join('_');
-  }, [driverLocation, stops, currentStopId, orderCoordinates]);
-
-  // All hooks (useState, useEffect, useMemo for mapKey) are called before this conditional return.
   if (!isClient) {
     return <div className="h-full w-full bg-muted flex items-center justify-center"><p>Initializing Map...</p></div>;
   }
@@ -257,7 +247,6 @@ const MapDisplay: React.FC<MapDisplayProps> = ({ orderCoordinates, driverLocatio
 
   return (
     <MapContainer
-      key={mapKey}
       center={defaultPosition}
       zoom={defaultZoomLevel}
       scrollWheelZoom={true}
