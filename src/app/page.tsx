@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useMemo, Suspense } from 'react';
+import { useState, useEffect, useMemo, Suspense, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import BottomNavbar from '@/components/BottomNavbar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -20,12 +20,15 @@ import {
   Edit2Icon,
   ChevronLeftIcon,
   ListOrderedIcon,
-  HomeIcon
+  HomeIcon,
+  EraserIcon,
 } from 'lucide-react';
 import type { NextPage } from 'next';
 import type { DeliveryBatch, OrderStop } from '@/types/delivery';
 import type { LatLngExpression } from 'leaflet';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
+import Image from 'next/image';
+import SignatureCanvas from 'react-signature-canvas';
 
 const DynamicMapDisplay = dynamic(() => import('@/components/MapDisplay'), {
   ssr: false,
@@ -60,6 +63,11 @@ const HomePageContent: NextPage = () => {
   const [gpsError, setGpsError] = useState<string | null>(null);
   const [showProofUpload, setShowProofUpload] = useState(false);
 
+  // State for Proof of Delivery
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const sigCanvasRef = useRef<SignatureCanvas>(null);
+
   useEffect(() => {
     const autoStartParam = searchParams.get('autoStartDelivery');
     const acceptedJobId = searchParams.get('jobId');
@@ -83,7 +91,6 @@ const HomePageContent: NextPage = () => {
         },
         (error) => {
           let errorMessage = 'Unable to retrieve location. GPS might be disabled or permissions denied.';
-          // Try to get a more specific error message
           if (error && typeof error.message === 'string' && error.message.trim() !== '') {
             errorMessage = error.message;
           } else if (error && typeof error.code === 'number') {
@@ -101,7 +108,7 @@ const HomePageContent: NextPage = () => {
                 errorMessage = `An unknown geolocation error occurred (Code: ${error.code}).`;
             }
           }
-          console.error('Geolocation error details:', `Message: "${errorMessage}"`, 'Raw error object:', error);
+          console.error(`Geolocation error: ${errorMessage} (Code: ${error?.code})`, 'Raw error object:', error);
           setGpsError(errorMessage);
           setDriverLocation(null);
         },
@@ -180,10 +187,39 @@ const HomePageContent: NextPage = () => {
     }
   };
 
+  const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files[0]) {
+      const file = event.target.files[0];
+      setPhotoFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPhotoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleClearSignature = () => {
+    sigCanvasRef.current?.clear();
+  };
+
   const handleProofSubmitted = () => {
     if (!currentDelivery || !currentStop) return;
+    
+    const signatureData = sigCanvasRef.current?.isEmpty() ? null : sigCanvasRef.current?.toDataURL();
+
+    console.log("Submitting Proof of Delivery...");
+    console.log("Photo File:", photoFile);
+    console.log("Signature Data URL (trimmed):", signatureData ? signatureData.substring(0, 50) + '...' : "No signature");
+
     setStopStatuses(prev => ({ ...prev, [currentStop.id]: 'delivered' }));
     setShowProofUpload(false);
+    
+    // Reset proof states for the next delivery
+    setPhotoPreview(null);
+    setPhotoFile(null);
+    sigCanvasRef.current?.clear();
+
     if (currentStopIndex < currentDelivery.stops.length - 1) {
       setCurrentStopIndex(prev => prev + 1);
     } else {
@@ -197,7 +233,7 @@ const HomePageContent: NextPage = () => {
     const status = stopStatuses[currentStop.id];
 
     if (showProofUpload) {
-        return { text: 'Submit Proof', disabled: false, action: handleProofSubmitted, icon: CheckCircle2Icon };
+        return { text: 'Confirm Delivery', disabled: !photoFile, action: handleProofSubmitted, icon: CheckCircle2Icon };
     }
 
     switch (currentStop.type) {
@@ -280,20 +316,46 @@ const HomePageContent: NextPage = () => {
                 <CardHeader className="py-3 px-4">
                   <CardTitle className="text-base flex items-center">
                     <PackageIcon className="mr-2 h-5 w-5 text-primary" />
-                    Proof of Delivery for: {currentStop.shortAddress}
+                    Proof of Delivery: {currentStop.shortAddress}
                   </CardTitle>
+                  <CardDescription className="text-xs pt-1">For items: {currentStop.items?.join(', ')}</CardDescription>
                 </CardHeader>
-                <CardContent className="px-4 pb-4 space-y-3 text-sm">
-                  <p className="text-xs text-muted-foreground">Stop {currentStop.sequence}: {currentStop.items?.join(', ')}</p>
-                  <div className="space-y-2">
-                      <label htmlFor="photoProof" className="block text-xs font-medium text-foreground">Photo of Delivered Item(s):</label>
-                      <input type="file" id="photoProof" accept="image/*" className="block w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded-md file:border file:border-input file:bg-background file:text-xs file:font-medium file:text-primary hover:file:bg-primary/10" />
+                <CardContent className="px-4 pb-4 space-y-4 text-sm">
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-2">Photo Proof</label>
+                    <div className="w-full aspect-video bg-muted rounded-md flex items-center justify-center relative overflow-hidden border">
+                      {photoPreview ? (
+                        <Image src={photoPreview} alt="Proof of delivery" layout="fill" objectFit="cover" />
+                      ) : (
+                        <span className="text-muted-foreground text-xs">Photo Preview</span>
+                      )}
+                    </div>
+                    <Button asChild variant="outline" className="w-full mt-2">
+                      <label htmlFor="photoProof" className="cursor-pointer flex items-center justify-center">
+                        <CameraIcon className="mr-2 h-4 w-4" />
+                        {photoPreview ? 'Retake' : 'Take'} Photo
+                      </label>
+                    </Button>
+                    <input type="file" id="photoProof" accept="image/*" capture="environment" className="sr-only" onChange={handlePhotoChange} />
                   </div>
-                  <div className="space-y-1">
-                      <label className="block text-xs font-medium text-foreground">Recipient Signature:</label>
-                      <div className="w-full h-24 bg-muted rounded-md flex items-center justify-center text-muted-foreground border border-input">
-                          <Edit2Icon className="h-5 w-5 mr-1" /> Placeholder for signature pad
-                      </div>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-2">Recipient Signature</label>
+                    <div className="relative w-full h-32 rounded-md border bg-white">
+                      <SignatureCanvas
+                        ref={sigCanvasRef}
+                        penColor='black'
+                        canvasProps={{ className: 'w-full h-full rounded-md' }}
+                      />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute top-1 right-1 h-7 w-7"
+                        onClick={handleClearSignature}
+                        aria-label="Clear signature"
+                      >
+                        <EraserIcon className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
