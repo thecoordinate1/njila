@@ -10,8 +10,8 @@ const ptSans = PT_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "OTW",
-  description: "OTW Delivery App - Efficient courier services.",
+  title: "Njila",
+  description: "Njila Delivery App - Efficient courier services.",
 };
 
 export default function RootLayout({

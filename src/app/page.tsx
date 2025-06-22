@@ -287,7 +287,7 @@ const HomePageContent: NextPage = () => {
     if (isOnline && currentDelivery && currentStop) {
       return `Active: ${currentDelivery.label} (${currentStop.sequence}/${currentDelivery.stops.length})`;
     }
-    return "OTW";
+    return "Njila";
   }, [isOnline, currentDelivery, currentStop]);
 
 
@@ -296,7 +296,7 @@ const HomePageContent: NextPage = () => {
       <header className="sticky top-0 z-30 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto h-16 flex items-center justify-between px-4">
           <h1 className="text-xl font-bold text-primary truncate flex-1">
-            {headerTitle === "OTW" && <HomeIcon className="inline-block mr-2 h-6 w-6 align-text-bottom" />}
+            {headerTitle === "Njila" && <HomeIcon className="inline-block mr-2 h-6 w-6 align-text-bottom" />}
             {headerTitle}
           </h1>
           <div className="flex items-center space-x-3 ml-2">
@@ -317,8 +317,8 @@ const HomePageContent: NextPage = () => {
       </header>
 
       {isOnline && currentDelivery ? (
-        <div className="group flex flex-col md:flex-row" style={{ height: 'calc(100vh - 4rem - 4rem)'}}> 
-          <div className="bg-muted relative h-1/2 md:h-full md:w-2/3 transition-all duration-300 ease-in-out group-hover:md:w-1/2">
+        <div className="flex flex-col md:flex-row md:h-full md:flex-grow" style={{ height: 'calc(100vh - 4rem - 4rem)'}}>
+          <div className="bg-muted relative h-1/2 md:h-full md:w-2/3 transition-all duration-300 ease-in-out md:hover:w-1/2">
             {gpsError && (
               <div className="absolute top-2 left-2 right-2 z-10">
                 <Alert variant="destructive">
@@ -341,7 +341,7 @@ const HomePageContent: NextPage = () => {
             )}
           </div>
 
-          <div className="bg-background shadow-t-lg flex h-1/2 md:h-full md:w-1/3 flex-col overflow-hidden transition-all duration-300 ease-in-out group-hover:md:w-1/2">
+          <div className="bg-background shadow-t-lg flex h-1/2 md:h-full md:w-1/3 flex-col overflow-hidden transition-all duration-300 ease-in-out md:hover:w-1/2">
             {showConfirmationScreen && currentStop ? (
               <Card className="m-2 flex-grow overflow-y-auto shadow-none border-none rounded-none">
                 <CardHeader className="py-3 px-4">
