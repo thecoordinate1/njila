@@ -48,7 +48,8 @@ const JobsPage: NextPage = () => {
     const { data, error } = await supabase
       .from('orders')
       .select('*')
-      .eq('status', 'Pending');
+      .eq('status', 'Pending')
+      .eq('delivery_type', 'courier');
 
     if (error) {
       console.error('Error fetching jobs:', error.message);
