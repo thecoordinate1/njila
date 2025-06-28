@@ -25,6 +25,7 @@ import type { NextPage } from 'next';
 import type { DeliveryBatch, OrderStop } from '@/types/delivery';
 import type { LatLngExpression } from 'leaflet';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
 
 const DynamicMapDisplay = dynamic(() => import('@/components/MapDisplay'), {
   ssr: false,
@@ -51,11 +52,13 @@ const HomePageContent: NextPage = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
+  const supabase = useMemo(() => createClient(), []);
 
   const [isOnline, setIsOnline] = useState(false);
   const [driverName] = useState("Alex Ryder"); 
 
   const [currentDelivery, setCurrentDelivery] = useState<DeliveryBatch | null>(null);
+  const [activeJobId, setActiveJobId] = useState<string | null>(null);
   const [currentStopIndex, setCurrentStopIndex] = useState(0);
   const [stopStatuses, setStopStatuses] = useState<Record<string, OrderStop['status']>>({});
   const [driverLocation, setDriverLocation] = useState<LatLngExpression | null>(null);
@@ -82,13 +85,13 @@ const HomePageContent: NextPage = () => {
 
   useEffect(() => {
     const autoStartParam = searchParams.get('autoStartDelivery');
-    const acceptedJobId = searchParams.get('jobId');
+    const jobIdFromParams = searchParams.get('jobId');
 
-    if (autoStartParam === 'true' && !isOnline && !currentDelivery) {
-      console.log(`Auto-starting delivery, triggered by job ID: ${acceptedJobId || 'any available'}`);
+    if (autoStartParam === 'true' && jobIdFromParams && !isOnline && !currentDelivery) {
+      console.log(`Auto-starting delivery, triggered by job ID: ${jobIdFromParams}`);
       
-      // We call the toggle handler here to ensure localStorage is updated correctly
-      handleToggleOnline(true);
+      setActiveJobId(jobIdFromParams); // Set the active job ID state
+      handleToggleOnline(true); // We call the toggle handler here to ensure localStorage is updated correctly
 
       const newPath = pathname; 
       router.replace(newPath, undefined); 
@@ -170,6 +173,7 @@ const HomePageContent: NextPage = () => {
       }
     } else {
       setCurrentDelivery(null);
+      setActiveJobId(null);
       setStopStatuses({});
       setCurrentStopIndex(0);
       setShowConfirmationScreen(false);
@@ -186,7 +190,7 @@ const HomePageContent: NextPage = () => {
     localStorage.setItem('driverIsOnline', JSON.stringify(checked));
   };
 
-  const handleStatusUpdate = () => {
+  const handleStatusUpdate = async () => {
     if (!currentDelivery || !currentStop) return;
 
     let nextStatus: OrderStop['status'] | null = null;
@@ -210,27 +214,53 @@ const HomePageContent: NextPage = () => {
     
     if (nextStatus) {
       setStopStatuses(prev => ({ ...prev, [currentStop.id]: nextStatus! }));
-      if (nextStatus === 'picked_up') { 
+      
+      if (nextStatus === 'picked_up') {
+        if (activeJobId) {
+          console.log(`Updating job ${activeJobId} status to 'delivering'`);
+          const { error } = await supabase
+            .from('orders')
+            .update({ status: 'delivering' })
+            .eq('id', activeJobId);
+
+          if (error) {
+            console.error('Error updating job status to delivering:', error.message);
+          }
+        }
+
         if (currentStopIndex < currentDelivery.stops.length - 1) {
           setCurrentStopIndex(prev => prev + 1);
         } else {
           console.log('Batch completed!');
           setCurrentDelivery(null); 
+          setActiveJobId(null);
         }
       }
     }
   };
 
 
-  const handleCodeVerification = () => {
+  const handleCodeVerification = async () => {
     if (!currentDelivery || !currentStop) return;
     
     setValidationStatus('loading');
     
     // Simulate API call
-    setTimeout(() => {
+    setTimeout(async () => {
       if (deliveryCode === CORRECT_DELIVERY_CODE) {
         setValidationStatus('success');
+
+        if (activeJobId) {
+          console.log(`Updating job ${activeJobId} status to 'delivered'`);
+          const { error } = await supabase
+            .from('orders')
+            .update({ status: 'delivered' })
+            .eq('id', activeJobId);
+
+          if (error) {
+            console.error('Error updating job status to delivered:', error.message);
+          }
+        }
         
         setTimeout(() => {
           // Update status and move to next stop
@@ -244,6 +274,7 @@ const HomePageContent: NextPage = () => {
           } else {
             console.log('Batch completed!');
             setCurrentDelivery(null);
+            setActiveJobId(null);
           }
         }, 1500); // Show success message for a bit
 
@@ -317,8 +348,8 @@ const HomePageContent: NextPage = () => {
       </header>
 
       {isOnline && currentDelivery ? (
-        <div className="flex flex-col md:flex-row md:h-full md:flex-grow" style={{ height: 'calc(100vh - 4rem - 4rem)'}}>
-          <div className="bg-muted relative h-1/2 md:h-full md:w-2/3 transition-all duration-300 ease-in-out md:hover:w-1/2">
+        <div className="flex flex-col md:flex-row md:h-full md:flex-grow md:group" style={{ height: 'calc(100vh - 4rem - 4rem)'}}>
+          <div className="bg-muted relative h-1/2 md:h-full md:w-2/3 transition-all duration-300 ease-in-out md:group-hover:w-1/2">
             {gpsError && (
               <div className="absolute top-2 left-2 right-2 z-10">
                 <Alert variant="destructive">
@@ -341,7 +372,7 @@ const HomePageContent: NextPage = () => {
             )}
           </div>
 
-          <div className="bg-background shadow-t-lg flex h-1/2 md:h-full md:w-1/3 flex-col overflow-hidden transition-all duration-300 ease-in-out md:hover:w-1/2">
+          <div className="bg-background shadow-t-lg flex h-1/2 md:h-full md:w-1/3 flex-col overflow-hidden transition-all duration-300 ease-in-out md:group-hover:w-1/2">
             {showConfirmationScreen && currentStop ? (
               <Card className="m-2 flex-grow overflow-y-auto shadow-none border-none rounded-none">
                 <CardHeader className="py-3 px-4">

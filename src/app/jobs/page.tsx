@@ -84,7 +84,7 @@ const JobsPage: NextPage = () => {
 
     const { error } = await supabase
       .from('orders')
-      .update({ status: 'in_progress' })
+      .update({ status: 'driving picking up' })
       .eq('id', jobId);
 
     if (error) {
