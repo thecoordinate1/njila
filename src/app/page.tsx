@@ -348,7 +348,7 @@ const HomePageContent: NextPage = () => {
       </header>
 
       {isOnline && currentDelivery ? (
-        <div className="flex flex-col md:flex-row md:h-full md:flex-grow md:group" style={{ height: 'calc(100vh - 4rem - 4rem)'}}>
+        <div className="flex flex-col md:flex-row md:group" style={{ height: 'calc(100vh - 8rem)'}}>
           <div className="bg-muted relative h-1/2 md:h-full md:w-2/3 transition-all duration-300 ease-in-out md:group-hover:w-1/2">
             {gpsError && (
               <div className="absolute top-2 left-2 right-2 z-10">
