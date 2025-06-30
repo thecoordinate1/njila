@@ -2,8 +2,8 @@
 'use client';
 
 import type { NextPage } from 'next';
-import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation'; 
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import BottomNavbar from '@/components/BottomNavbar';
 import {
   Card,
@@ -40,8 +40,8 @@ const JobsPage: NextPage = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAccepting, setIsAccepting] = useState<string | null>(null);
-  const router = useRouter(); 
-  const supabase = createClient();
+  const router = useRouter();
+  const supabase = useMemo(() => createClient(), []);
 
   const fetchJobs = useCallback(async () => {
     setIsLoading(true);
@@ -52,20 +52,25 @@ const JobsPage: NextPage = () => {
       .eq('delivery_type', 'courier');
 
     if (error) {
-      console.error('Error fetching jobs:', error.message);
+      console.error('Error fetching jobs:', error);
       setJobs([]);
-    } else if (data) {
-      const formattedJobs = data.map((job: any) => ({
-        id: job.id.toString(),
-        title: job.title,
-        distance: job.distance,
-        time: job.time,
-        stops: job.stops,
-        payout: job.payout,
-        currency: job.currency,
-        pickupAddress: job.pickup_address,
-      }));
-      setJobs(formattedJobs);
+    } else {
+      console.log('Supabase jobs fetch successful. Data:', data);
+      if (data) {
+        const formattedJobs = data.map((job: any) => ({
+          id: job.id.toString(),
+          title: job.title,
+          distance: job.distance,
+          time: job.time,
+          stops: job.stops,
+          payout: job.payout,
+          currency: job.currency,
+          pickupAddress: job.pickup_address,
+        }));
+        setJobs(formattedJobs);
+      } else {
+        setJobs([]);
+      }
     }
     setIsLoading(false);
   }, [supabase]);
@@ -169,8 +174,8 @@ const JobsPage: NextPage = () => {
                 </div>
               </CardContent>
               <CardFooter className="bg-muted/50 p-4 border-t">
-                <Button 
-                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" 
+                <Button
+                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
                   size="lg"
                   onClick={() => handleAcceptJob(job.id)}
                   disabled={isAccepting !== null}
@@ -190,7 +195,7 @@ const JobsPage: NextPage = () => {
             <BriefcaseIcon className="mx-auto h-16 w-16 text-muted-foreground/70 mb-5" />
             <h3 className="text-2xl font-semibold mb-2 text-foreground/90">No Jobs Available</h3>
             <p className="text-sm text-muted-foreground px-4">
-              Check back soon or try refreshing the list.
+              Check back soon or try refreshing the list. If you believe there should be jobs, check the browser console for errors.
             </p>
             <Button variant="outline" onClick={handleRefreshJobs} className="mt-6">
                 <RefreshCwIcon className="mr-2 h-4 w-4" /> Refresh Now
@@ -205,4 +210,3 @@ const JobsPage: NextPage = () => {
 };
 
 export default JobsPage;
-    
