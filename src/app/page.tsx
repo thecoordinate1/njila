@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo, Suspense, useRef } from 'react';
@@ -75,7 +74,7 @@ const HomePageContent: NextPage = () => {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
             const { data, error } = await supabase
-                .from('profiles')
+                .from('drivers')
                 .select('full_name')
                 .eq('id', user.id)
                 .single();

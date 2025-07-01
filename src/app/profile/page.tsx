@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { NextPage } from 'next';
@@ -34,7 +33,7 @@ const ProfilePage: NextPage = () => {
 
       if (user) {
         const { data, error } = await supabase
-          .from('profiles')
+          .from('drivers')
           .select('*')
           .eq('id', user.id)
           .single();
