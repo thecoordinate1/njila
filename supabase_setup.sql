@@ -1,23 +1,21 @@
--- This script sets up the database tables and Row Level Security (RLS) policies
--- for the Njila Driver App.
+-- Supabase Njila App Setup Script
 --
--- It is designed to be re-runnable. It will drop existing policies and triggers
--- before recreating them to ensure a clean setup.
+-- This script configures all the necessary tables, security policies (RLS),
+-- and database functions for the Njila courier application.
 --
--- Steps to run:
+-- To use this script:
 -- 1. Navigate to the "SQL Editor" in your Supabase project dashboard.
 -- 2. Click "+ New query".
 -- 3. Copy and paste the entire content of this file into the editor.
 -- 4. Click "Run".
+--
+-- This script can be run multiple times safely. It uses "CREATE OR REPLACE"
+-- and "IF NOT EXISTS" to avoid errors on subsequent runs.
 
--- =================================================================
--- Section 1: Drivers Table
--- Stores profile information for drivers, linked to their auth account.
--- =================================================================
-
--- 1.1. Create the 'drivers' table if it doesn't exist.
+-- 1. DRIVERS TABLE
+-- Stores profile information for drivers, linked to their authentication record.
 CREATE TABLE IF NOT EXISTS public.drivers (
-  id UUID PRIMARY KEY NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   updated_at TIMESTAMPTZ,
   full_name TEXT,
   email TEXT UNIQUE,
@@ -26,18 +24,19 @@ CREATE TABLE IF NOT EXISTS public.drivers (
   license_plate TEXT,
   insurance_verified BOOLEAN DEFAULT FALSE,
   emergency_contact_name TEXT,
-  emergency_contact_phone TEXT
+  emergency_contact_phone TEXT,
+  member_since TIMESTAMPTZ DEFAULT NOW()
 );
 COMMENT ON TABLE public.drivers IS 'Stores public profile information for each user (driver).';
 
--- 1.2. Enable Row Level Security on the 'drivers' table.
+-- Enable Row Level Security (RLS) on the drivers table.
 ALTER TABLE public.drivers ENABLE ROW LEVEL SECURITY;
 
--- 1.3. Drop existing policies to ensure a clean slate.
+-- Clean up old policies before creating new ones.
 DROP POLICY IF EXISTS "Drivers can view their own profile." ON public.drivers;
 DROP POLICY IF EXISTS "Drivers can update their own profile." ON public.drivers;
 
--- 1.4. Create policies for the 'drivers' table.
+-- Create RLS policies for the drivers table.
 CREATE POLICY "Drivers can view their own profile."
 ON public.drivers FOR SELECT
 USING (auth.uid() = id);
@@ -47,81 +46,72 @@ ON public.drivers FOR UPDATE
 USING (auth.uid() = id)
 WITH CHECK (auth.uid() = id);
 
-
--- =================================================================
--- Section 2: Orders Table
--- Stores all delivery jobs.
--- =================================================================
-
--- 2.1. Create the 'orders' table if it doesn't exist.
+-- 2. ORDERS TABLE
+-- Stores information about all delivery jobs.
 CREATE TABLE IF NOT EXISTS public.orders (
   id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   title TEXT,
   pickup_address TEXT NOT NULL,
-  destination_address TEXT,
-  payout NUMERIC(10, 2),
-  currency TEXT,
+  destination_address TEXT NOT NULL,
+  payout NUMERIC(10, 2) NOT NULL,
+  currency TEXT NOT NULL DEFAULT 'USD',
   distance TEXT,
   time TEXT,
-  stops INT,
-  status TEXT NOT NULL DEFAULT 'Pending',
-  delivery_type TEXT, -- e.g., 'courier' or 'self_delivery'
-  driver_id UUID REFERENCES public.drivers(id) ON DELETE SET NULL
+  stops INT DEFAULT 1,
+  status TEXT NOT NULL DEFAULT 'Pending', -- e.g., Pending, driving picking up, delivering, delivered, cancelled
+  driver_id UUID REFERENCES public.drivers(id) ON DELETE SET NULL,
+  delivery_type TEXT -- e.g., courier, self_delivery
 );
-COMMENT ON TABLE public.orders IS 'Stores details for each delivery job.';
+COMMENT ON TABLE public.orders IS 'Stores all delivery jobs for the platform.';
 
--- 2.2. Enable Row Level Security on the 'orders' table.
+-- Enable Row Level Security (RLS) on the orders table.
 ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
 
--- 2.3. Drop existing policies to ensure a clean slate.
-DROP POLICY IF EXISTS "Drivers can view available or their own orders." ON public.orders;
-DROP POLICY IF EXISTS "Drivers can update status on their own or available orders." ON public.orders;
+-- Clean up old policies before creating new ones.
+DROP POLICY IF EXISTS "Drivers can view available jobs." ON public.orders;
+DROP POLICY IF EXISTS "Drivers can update status for their assigned jobs." ON public.orders;
 
--- 2.4. Create policies for the 'orders' table.
--- Policy for SELECT: Drivers can see available courier jobs OR orders already assigned to them.
-CREATE POLICY "Drivers can view available or their own orders."
+-- Create RLS policies for the orders table.
+CREATE POLICY "Drivers can view available jobs."
 ON public.orders FOR SELECT
 USING (
-  (status = 'Pending' AND delivery_type = 'courier') OR (driver_id = auth.uid())
+  (delivery_type = 'courier' AND status = 'Pending') OR (driver_id = auth.uid())
 );
 
--- Policy for UPDATE: Drivers can accept a pending job by assigning it to themselves,
--- or update the status of a job they already own.
-CREATE POLICY "Drivers can update status on their own or available orders."
+CREATE POLICY "Drivers can update status for their assigned jobs."
 ON public.orders FOR UPDATE
-USING (
-  (driver_id = auth.uid()) OR (status = 'Pending' AND delivery_type = 'courier')
-)
-WITH CHECK (
-  driver_id = auth.uid()
-);
+USING (driver_id = auth.uid())
+WITH CHECK (driver_id = auth.uid());
 
 
--- =================================================================
--- Section 3: Auth Trigger for New User Profiles
--- Automatically creates a 'drivers' entry when a new user signs up.
--- =================================================================
-
--- 3.1. Drop existing trigger and function to ensure a clean slate.
-DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
-DROP FUNCTION IF EXISTS public.handle_new_user;
-
--- 3.2. Create the function.
-CREATE FUNCTION public.handle_new_user()
+-- 3. FUNCTION TO AUTO-CREATE A DRIVER PROFILE ON SIGNUP
+CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
+  -- Insert a new row into the public.drivers table
+  -- with the ID and metadata from the new user.
   INSERT INTO public.drivers (id, email, full_name)
   VALUES (new.id, new.email, new.raw_user_meta_data->>'full_name');
   RETURN new;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- 3.3. Create the trigger.
+-- 4. TRIGGER TO EXECUTE THE FUNCTION AFTER A NEW USER IS CREATED
+-- This connects the function to the auth.users table.
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
--- =================================================================
--- End of Script
--- =================================================================
+-- 5. OPTIONAL: SEED DATA FOR TESTING
+-- Insert some sample orders to test the "Available Jobs" page.
+-- You can comment this out or remove it for production.
+-- DO NOT RUN a second time if you have existing data, it might fail or create duplicates.
+-- INSERT INTO public.orders (title, pickup_address, destination_address, payout, currency, distance, time, stops, status, delivery_type)
+-- VALUES
+-- ('Grocery Delivery', 'Kamwala Market, Lusaka', 'EastPark Mall, Lusaka', 25.50, 'ZMW', '8 km', '25 mins', 2, 'Pending', 'courier'),
+-- ('Document Courier', 'Central Park, Cairo Road, Lusaka', 'Manda Hill Mall, Lusaka', 15.00, 'ZMW', '5 km', '15 mins', 1, 'Pending', 'courier'),
+-- ('Pharmacy Run', 'University Teaching Hospital (UTH)', 'Arcades Shopping Mall', 30.75, 'ZMW', '12 km', '35 mins', 1, 'Pending', 'courier');
+
+-- End of script
