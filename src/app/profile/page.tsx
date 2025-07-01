@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { NextPage } from 'next';
@@ -6,8 +7,9 @@ import { createClient } from '@/lib/supabase/client';
 import BottomNavbar from '@/components/BottomNavbar';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { UserCircle2, Truck, Edit3, ShieldAlertIcon, DollarSignIcon, TrendingUpIcon, CalendarDaysIcon, RefreshCwIcon } from 'lucide-react';
+import { UserCircle2, Truck, Edit3, ShieldAlertIcon, DollarSignIcon, TrendingUpIcon, CalendarDaysIcon, RefreshCwIcon, LogOutIcon } from 'lucide-react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 interface ProfileData {
   full_name: string | null;
@@ -23,6 +25,7 @@ interface ProfileData {
 
 const ProfilePage: NextPage = () => {
   const supabase = useMemo(() => createClient(), []);
+  const router = useRouter();
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -53,6 +56,12 @@ const ProfilePage: NextPage = () => {
 
     fetchProfile();
   }, [supabase]);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push('/login');
+    router.refresh();
+  };
 
   if (loading) {
     return (
@@ -160,6 +169,10 @@ const ProfilePage: NextPage = () => {
               </Button>
             </CardFooter>
           </Card>
+
+          <Button variant="destructive" className="w-full" size="lg" onClick={handleLogout}>
+            <LogOutIcon className="mr-2 h-5 w-5" /> Log Out
+          </Button>
 
         </div>
       </main>
