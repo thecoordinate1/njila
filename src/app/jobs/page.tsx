@@ -87,14 +87,26 @@ const JobsPage: NextPage = () => {
     setIsAccepting(jobId);
     console.log(`Accepted job: ${jobId}`);
 
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      console.error("User is not authenticated. Cannot accept job.");
+      setIsAccepting(null);
+      // Optionally, add user feedback here (e.g., a toast)
+      return;
+    }
+
     const { error } = await supabase
       .from('orders')
-      .update({ status: 'driving picking up' })
-      .eq('id', jobId);
+      .update({ status: 'driving picking up', driver_id: user.id })
+      .eq('id', jobId)
+      .select();
 
     if (error) {
       console.error('Error updating job status:', error.message);
-      // Optionally, add user feedback here (e.g., a toast)
+      if (error.message.includes('violates row-level security policy')) {
+        console.error("RLS Policy Violation: This job may have been taken by another driver.");
+      }
       setIsAccepting(null);
       return;
     }
