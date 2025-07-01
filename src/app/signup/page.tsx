@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -26,24 +27,30 @@ export default function SignupPage() {
     setError(null);
     setMessage(null);
 
-    const { error } = await supabase.auth.signUp({
+    // NOTE: Email confirmation has been disabled for easier development.
+    // For production, you should re-enable email confirmation by adding
+    // the `emailRedirectTo` option and configure a custom SMTP provider in Supabase.
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
           full_name: fullName,
-        },
-        // This will send a confirmation email. The user must click the link
-        // to be properly signed up. You can disable this in Supabase settings.
-        emailRedirectTo: `${location.origin}/auth/callback`,
+        }
       },
     });
 
     if (error) {
       setError(error.message);
+    } else if (data.user) {
+      // User is signed up and logged in, redirect to home.
+      router.push('/');
+      router.refresh();
     } else {
-      setMessage('Check your email to continue the sign-up process.');
+        // Fallback for an unexpected state
+        setError("An unknown error occurred during signup. Please try again.");
     }
+
     setLoading(false);
   };
 
