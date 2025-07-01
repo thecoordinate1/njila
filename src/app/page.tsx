@@ -55,7 +55,7 @@ const HomePageContent: NextPage = () => {
   const supabase = useMemo(() => createClient(), []);
 
   const [isOnline, setIsOnline] = useState(false);
-  const [driverName] = useState("Alex Ryder"); 
+  const [driverName, setDriverName] = useState("Driver"); 
 
   const [currentDelivery, setCurrentDelivery] = useState<DeliveryBatch | null>(null);
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
@@ -69,6 +69,26 @@ const HomePageContent: NextPage = () => {
   // State for Code Validation
   const [deliveryCode, setDeliveryCode] = useState('');
   const [validationStatus, setValidationStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+
+  useEffect(() => {
+    const fetchDriverName = async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('full_name')
+                .eq('id', user.id)
+                .single();
+
+            if (data && data.full_name) {
+                setDriverName(data.full_name);
+            } else if (user.email) {
+                setDriverName(user.email);
+            }
+        }
+    };
+    fetchDriverName();
+  }, [supabase]);
 
   useEffect(() => {
     // On component mount, read the status from localStorage to persist state across refreshes.

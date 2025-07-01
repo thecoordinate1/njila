@@ -2,13 +2,23 @@
 'use client';
 
 import type { NextPage } from 'next';
+import { useRouter } from 'next/navigation';
 import BottomNavbar from '@/components/BottomNavbar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { BellDotIcon, PaletteIcon, GlobeIcon, ShieldCheckIcon, LogOutIcon, ChevronRightIcon, CreditCardIcon, HelpCircleIcon } from 'lucide-react';
+import { BellDotIcon, PaletteIcon, ShieldCheckIcon, LogOutIcon, ChevronRightIcon, CreditCardIcon, HelpCircleIcon } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
 
 const SettingsPage: NextPage = () => {
-  // Placeholder for state, e.g., const [darkMode, setDarkMode] = useState(false);
+  const router = useRouter();
+  const supabase = createClient();
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push('/login');
+    router.refresh();
+  };
+
 
   return (
     <div className="relative min-h-screen flex flex-col bg-muted/30">
@@ -146,7 +156,7 @@ const SettingsPage: NextPage = () => {
             </CardContent>
           </Card>
 
-          <Button variant="destructive" className="w-full" size="lg">
+          <Button variant="destructive" className="w-full" size="lg" onClick={handleLogout}>
             <LogOutIcon className="mr-2 h-5 w-5" /> Log Out
           </Button>
         </div>

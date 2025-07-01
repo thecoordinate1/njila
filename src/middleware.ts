@@ -35,18 +35,17 @@ export async function middleware(request: NextRequest) {
 
   const currentPath = request.nextUrl.pathname;
 
-  const authRoutes = ['/login', '/signup', '/forgot-password', '/update-password'];
-  const publicStaticRoutes = ['/', '/about']; // Explicitly public routes
+  const authRoutes = ['/login', '/signup'];
 
   // If user is not signed in and trying to access a protected route
-  // if (!user && !authRoutes.includes(currentPath) && !publicStaticRoutes.includes(currentPath) && !currentPath.startsWith('/auth/callback')) {
-  //   return NextResponse.redirect(new URL('/login?message=Please sign in to access this page.', request.url));
-  // }
+  if (!user && !authRoutes.includes(currentPath)) {
+    return NextResponse.redirect(new URL('/login?message=Please sign in to access this page.', request.url));
+  }
 
   // If user is signed in and trying to access auth routes (login, signup)
-  // if (user && authRoutes.includes(currentPath)) {
-  //   return NextResponse.redirect(new URL('/dashboard', request.url));
-  // }
+  if (user && authRoutes.includes(currentPath)) {
+    return NextResponse.redirect(new URL('/', request.url));
+  }
 
   return response;
 }
@@ -58,8 +57,8 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
-     * Feel free to modify this pattern to include more paths.
+     * - auth/callback (Supabase auth callback)
      */
-    '/((?!_next/static|_next/image|favicon.ico|auth).*)', // Ensure /auth/callback is excluded here if not handled by the !currentPath.startsWith condition
+    '/((?!_next/static|_next/image|favicon.ico|auth/callback).*)',
   ],
 }
