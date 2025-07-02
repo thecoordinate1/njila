@@ -118,7 +118,7 @@ const ProfilePage: NextPage = () => {
           <h1 className="text-2xl font-bold tracking-tight">User Profile</h1>
         </div>
       </header>
-      <main className="flex-grow flex flex-col items-center p-4 md:p-6 pb-24">
+      <main className="flex-grow flex flex-col items-center p-4 md:p-6 pb-32">
         <div className="w-full max-w-2xl space-y-6">
           <Card className="overflow-hidden shadow-md">
             <CardHeader className="bg-muted/50 p-6 flex flex-col items-center text-center">

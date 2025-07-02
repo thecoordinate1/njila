@@ -66,7 +66,7 @@ const OrdersPage: NextPage = () => {
           <h1 className="text-2xl font-bold tracking-tight">Manage Orders</h1>
         </div>
       </header>
-      <main className="flex-grow flex flex-col items-center p-4 md:p-6 pb-24">
+      <main className="flex-grow flex flex-col items-center p-4 md:p-6 pb-32">
         
         <Tabs defaultValue="available" className="w-full max-w-3xl">
           <TabsList className="grid w-full grid-cols-2 mb-6 shadow-sm sticky top-16 z-20 bg-muted">

@@ -14,7 +14,7 @@ const HistoryPage: NextPage = () => {
           <h1 className="text-2xl font-bold tracking-tight text-primary">Order History</h1>
         </div>
       </header>
-      <main className="flex-grow flex flex-col items-center justify-center p-4 md:p-6 pb-24 text-center">
+      <main className="flex-grow flex flex-col items-center justify-center p-4 md:p-6 pb-32 text-center">
         <Card className="w-full max-w-md p-8 shadow-lg rounded-lg">
           <CardContent className="flex flex-col items-center justify-center">
             <HistoryIcon className="w-16 h-16 text-primary mb-6" />

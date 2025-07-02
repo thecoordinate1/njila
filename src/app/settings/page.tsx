@@ -16,7 +16,7 @@ const SettingsPage: NextPage = () => {
           <h1 className="text-2xl font-bold tracking-tight">App Settings</h1>
         </div>
       </header>
-      <main className="flex-grow flex flex-col items-center p-4 md:p-6 pb-24">
+      <main className="flex-grow flex flex-col items-center p-4 md:p-6 pb-32">
         <div className="w-full max-w-2xl space-y-6">
           <Card className="shadow-md">
             <CardHeader>

@@ -146,7 +146,7 @@ const JobsPage: NextPage = () => {
         </div>
       </header>
 
-      <main className="flex-grow p-4 md:p-6 pb-24 space-y-6">
+      <main className="flex-grow p-4 md:p-6 pb-32 space-y-6">
         {isLoading ? (
             <div className="text-center py-16">
               <RefreshCwIcon className="mx-auto h-12 w-12 text-primary animate-spin mb-4" />
