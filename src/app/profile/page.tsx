@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { UserCircle2, Truck, Edit3, ShieldAlertIcon, DollarSignIcon, TrendingUpIcon, CalendarDaysIcon, RefreshCwIcon, LogOutIcon, BriefcaseBusiness } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 interface ProfileData {
   full_name: string | null;
@@ -71,7 +72,7 @@ const ProfilePage: NextPage = () => {
     };
 
     fetchProfile();
-  }, [supabase, router]);
+  }, [supabase]);
   
   const handleRegisterDriver = async () => {
     setLoading(true);
@@ -163,7 +164,6 @@ const ProfilePage: NextPage = () => {
                     </h3>
                     <div className="space-y-2 text-sm text-muted-foreground">
                       <p><strong className="text-foreground">Name:</strong> {profile?.emergency_contact_name || 'N/A'}</p>
-                      <p><strong className="text-foreground">Relationship:</strong> Spouse</p>
                       <p><strong className="text-foreground">Phone:</strong> {profile?.emergency_contact_phone || 'N/A'}</p>
                     </div>
                   </div>
@@ -180,8 +180,10 @@ const ProfilePage: NextPage = () => {
             </CardContent>
             <CardFooter className="bg-muted/50 p-4 border-t">
               {profileExists ? (
-                <Button className="w-full" variant="outline">
-                  <Edit3 className="mr-2 h-4 w-4" /> Edit Profile
+                <Button asChild className="w-full" variant="outline">
+                  <Link href="/profile/edit">
+                    <Edit3 className="mr-2 h-4 w-4" /> Edit Profile
+                  </Link>
                 </Button>
               ) : (
                 <Button className="w-full" onClick={handleRegisterDriver} disabled={loading}>
