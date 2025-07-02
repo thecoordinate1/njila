@@ -1,17 +1,29 @@
--- Supabase Setup Script for Njila Delivery App
--- Version: 1.4
---
--- This script is designed to be idempotent and non-destructive.
--- You can run it multiple times without causing errors or data loss.
--- It will create tables and policies only if they do not already exist.
---
--- Steps to run:
--- 1. Navigate to the "SQL Editor" in your Supabase project dashboard.
--- 2. Click "+ New query".
--- 3. Copy and paste the entire content of this file into the editor.
--- 4. Click "Run".
+-- ================================================================================= --
+--                                                                                   --
+--        NJILA COURIER APP - SUPABASE DATABASE SETUP SCRIPT                           --
+--                                                                                   --
+--  This script will create and configure all necessary tables, policies, and        --
+--  triggers for the application.                                                    --
+--                                                                                   --
+--  Instructions:                                                                    --
+--  1. Navigate to the "SQL Editor" in your Supabase project dashboard.              --
+--  2. Click "+ New query".                                                          --
+--  3. Copy and paste the ENTIRE content of this file into the editor.               --
+--  4. Click "Run".                                                                  --
+--                                                                                   --
+--  This script is designed to be idempotent, meaning it can be run multiple         --
+--  times without causing errors. It will safely create tables if they don't exist   --
+--  and update policies.                                                             --
+--                                                                                   --
+-- ================================================================================= --
 
--- 1. Create the 'drivers' table if it doesn't exist.
+
+-- ================================================================================= --
+--  SECTION 1: DRIVERS TABLE                                                         --
+-- ================================================================================= --
+
+-- Create the 'drivers' table if it doesn't already exist.
+-- This table stores public profile information for each driver.
 CREATE TABLE IF NOT EXISTS public.drivers (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   updated_at TIMESTAMPTZ,
@@ -24,40 +36,43 @@ CREATE TABLE IF NOT EXISTS public.drivers (
   emergency_contact_name TEXT,
   emergency_contact_phone TEXT
 );
-
--- Add comments for clarity.
 COMMENT ON TABLE public.drivers IS 'Stores public profile information for each user (driver).';
 COMMENT ON COLUMN public.drivers.id IS 'Links to the auth.users table.';
 
--- 2. Enable Row Level Security (RLS) on the 'drivers' table.
--- This is a crucial security step. It is safe to run this multiple times.
+
+-- Enable Row Level Security (RLS) on the 'drivers' table.
 ALTER TABLE public.drivers ENABLE ROW LEVEL SECURITY;
 
--- 3. Create policies for the 'drivers' table.
--- These policies control who can access or modify data.
--- Each 'CREATE POLICY' includes 'IF NOT EXISTS' to prevent errors on re-runs.
+-- Drop existing policies to ensure a clean state before creating new ones.
+DROP POLICY IF EXISTS "Drivers can view their own profile." ON public.drivers;
+DROP POLICY IF EXISTS "Users can update their own profile." ON public.drivers;
+DROP POLICY IF EXISTS "Users can insert their own profile." ON public.drivers;
 
--- Policy: Allow drivers to view their own profile.
+-- POLICY 1: Allow drivers to view their own profile.
 CREATE POLICY "Drivers can view their own profile."
 ON public.drivers FOR SELECT
 USING (auth.uid() = id);
 
--- Policy: Allow drivers to update their own profile.
-CREATE POLICY "Drivers can update their own profile."
+-- POLICY 2: Allow drivers to update their own profile.
+CREATE POLICY "Users can update their own profile."
 ON public.drivers FOR UPDATE
 USING (auth.uid() = id)
 WITH CHECK (auth.uid() = id);
 
--- **** NEW POLICY TO FIX REGISTRATION ERROR ****
--- Policy: Allow users to create their own driver profile.
-CREATE POLICY "Drivers can create their own profile."
+-- POLICY 3: Allow users to insert their own profile.
+CREATE POLICY "Users can insert their own profile."
 ON public.drivers FOR INSERT
 WITH CHECK (auth.uid() = id);
 
--- 4. Create the 'orders' table if it doesn't exist.
+
+-- ================================================================================= --
+--  SECTION 2: ORDERS TABLE                                                          --
+-- ================================================================================= --
+
+-- Create the 'orders' table if it doesn't already exist.
 CREATE TABLE IF NOT EXISTS public.orders (
     id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     title TEXT,
     distance TEXT,
     time TEXT,
@@ -65,98 +80,79 @@ CREATE TABLE IF NOT EXISTS public.orders (
     payout NUMERIC,
     currency TEXT,
     pickup_address TEXT,
+    destination_address TEXT,
     status TEXT DEFAULT 'Pending',
     delivery_type TEXT,
-    -- This column links an order to a driver.
-    driver_id UUID REFERENCES auth.users(id) ON DELETE SET NULL
+    driver_id UUID REFERENCES public.drivers(id)
 );
+COMMENT ON TABLE public.orders IS 'Stores all delivery jobs.';
+COMMENT ON COLUMN public.orders.driver_id IS 'Links to the driver who has accepted the order.';
 
--- Add a non-destructive command to add the driver_id column if it's missing.
--- This is useful for migrating older table versions.
+
+-- Safely add the 'driver_id' column if it doesn't exist, for backwards compatibility.
 DO $$
 BEGIN
   IF NOT EXISTS(SELECT 1 FROM information_schema.columns WHERE table_name='orders' AND column_name='driver_id') THEN
-    ALTER TABLE public.orders ADD COLUMN driver_id UUID REFERENCES auth.users(id) ON DELETE SET NULL;
+    ALTER TABLE public.orders ADD COLUMN driver_id UUID REFERENCES public.drivers(id);
   END IF;
 END $$;
 
 
--- Add comments for clarity.
-COMMENT ON TABLE public.orders IS 'Stores all delivery jobs available in the system.';
-COMMENT ON COLUMN public.orders.driver_id IS 'The driver who has accepted the order.';
-
--- 5. Enable Row Level Security (RLS) on the 'orders' table.
+-- Enable Row Level Security (RLS) on the 'orders' table.
 ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
 
--- 6. Create policies for the 'orders' table.
+-- Drop existing policies to ensure a clean state before creating new ones.
+DROP POLICY IF EXISTS "Drivers can view available or their own jobs" ON public.orders;
+DROP POLICY IF EXISTS "Authenticated users can view available jobs" ON public.orders;
+DROP POLICY IF EXISTS "Drivers can view their own jobs" ON public.orders;
+DROP POLICY IF EXISTS "Drivers can accept or update their own jobs" ON public.orders;
 
--- Policy: Allow any authenticated user (driver) to see 'Pending' courier jobs.
-CREATE POLICY "Drivers can view available courier jobs."
+
+-- POLICY 1: Allow users to see available jobs, or jobs assigned to them.
+-- This single SELECT policy is simpler and more reliable. It allows any authenticated
+-- user to see jobs that are 'Pending' and of 'courier' type, OR any job that is
+-- assigned to them via their driver_id.
+CREATE POLICY "Drivers can view available or their own jobs"
 ON public.orders FOR SELECT
 USING (
-  auth.role() = 'authenticated' AND
-  status = 'Pending' AND
-  delivery_type = 'courier'
+  (status = 'Pending' AND delivery_type = 'courier') OR (auth.uid() = driver_id)
 );
 
--- Policy: Allow a driver to see an order they have accepted.
-CREATE POLICY "Drivers can view their assigned jobs."
-ON public.orders FOR SELECT
-USING (auth.uid() = driver_id);
 
--- Policy: Allow a driver to accept a 'Pending' job by updating its status and assigning it to themselves.
--- They can only do this if no other driver has taken it yet (driver_id is NULL).
-CREATE POLICY "Drivers can accept available jobs."
+-- POLICY 2: Allow drivers to accept a new job or update a job they've accepted.
+-- USING clause: This policy applies to rows where the driver_id is the current user OR is NULL (an unassigned job).
+-- WITH CHECK clause: Ensures that any update can only set the driver_id to the current user's ID.
+CREATE POLICY "Drivers can accept or update their own jobs"
 ON public.orders FOR UPDATE
 USING (
-  auth.uid() = driver_id OR -- Allows future updates by the assigned driver
-  (status = 'Pending' AND driver_id IS NULL)
+  auth.uid() = driver_id OR driver_id IS NULL
 )
 WITH CHECK (
-  -- When accepting, the new driver_id must be the current user's ID.
-  driver_id = auth.uid()
+  auth.uid() = driver_id
 );
 
--- 7. Create a function to automatically create a profile when a new user signs up.
--- This function is triggered when a new entry is added to 'auth.users'.
+
+-- ================================================================================= --
+--  SECTION 3: AUTOMATIC DRIVER CREATION                                             --
+-- ================================================================================= --
+
+-- Create a function that automatically inserts a new row into public.drivers
+-- whenever a new user signs up in auth.users.
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  -- Check if a profile for the new user already exists.
-  IF NOT EXISTS (SELECT 1 FROM public.drivers WHERE id = new.id) THEN
-    INSERT INTO public.drivers (id, email, full_name)
-    VALUES (new.id, new.email, new.raw_user_meta_data->>'full_name');
-  END IF;
+  INSERT INTO public.drivers (id, email, full_name)
+  VALUES (new.id, new.email, new.raw_user_meta_data->>'full_name');
   RETURN new;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- 8. Create a trigger to execute the function after a new user is created.
--- We drop the trigger first to ensure this script can be re-run without errors.
+-- Create a trigger that executes the handle_new_user function after a new user is created.
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
--- 9. Optional: Storage Policies (if using for avatars).
--- These are included for completeness.
--- Make sure a bucket named 'avatars' exists in Supabase Storage.
-
--- Drop existing policies to avoid conflicts on re-run
-DROP POLICY IF EXISTS "Avatar images are publicly accessible." ON storage.objects;
-DROP POLICY IF EXISTS "Anyone can upload an avatar." ON storage.objects;
-DROP POLICY IF EXISTS "Anyone can update their own avatar." ON storage.objects;
-
--- Create policies for viewing, uploading, and updating avatars.
-CREATE POLICY "Avatar images are publicly accessible."
-ON storage.objects FOR SELECT
-USING ( bucket_id = 'avatars' );
-
-CREATE POLICY "Anyone can upload an avatar."
-ON storage.objects FOR INSERT
-WITH CHECK ( bucket_id = 'avatars' );
-
-CREATE POLICY "Anyone can update their own avatar."
-ON storage.objects FOR UPDATE
-USING ( auth.uid() = owner )
-WITH CHECK ( bucket_id = 'avatars' );
+-- ================================================================================= --
+--                      END OF SCRIPT                                                --
+-- ================================================================================= --
