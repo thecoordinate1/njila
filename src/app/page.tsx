@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useState, useEffect, useMemo, Suspense, useRef } from 'react';
+import { useState, useEffect, useMemo, Suspense, useRef, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import BottomNavbar from '@/components/BottomNavbar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -19,6 +20,7 @@ import {
   ListOrderedIcon,
   HomeIcon,
   XCircleIcon,
+  RefreshCwIcon,
 } from 'lucide-react';
 import type { NextPage } from 'next';
 import type { DeliveryBatch, OrderStop } from '@/types/delivery';
@@ -58,6 +60,7 @@ const HomePageContent: NextPage = () => {
 
   const [currentDelivery, setCurrentDelivery] = useState<DeliveryBatch | null>(null);
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
+  const [isLoadingJob, setIsLoadingJob] = useState(false);
   const [currentStopIndex, setCurrentStopIndex] = useState(0);
   const [stopStatuses, setStopStatuses] = useState<Record<string, OrderStop['status']>>({});
   const [driverLocation, setDriverLocation] = useState<LatLngExpression | null>(null);
@@ -101,21 +104,110 @@ const HomePageContent: NextPage = () => {
     }
   }, []); // The empty dependency array ensures this effect runs only once on mount.
 
+  const fetchAndStartJob = useCallback(async (jobId: string) => {
+    setIsLoadingJob(true);
+    setIsOnline(true); // Show loading state on the map immediately
+    console.log(`Fetching data for job ID: ${jobId}`);
+    
+    const { data: jobData, error } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('id', jobId)
+        .single();
+    
+    if (error || !jobData) {
+        console.error('Error fetching job details:', error);
+        alert("Could not load the selected job. It might have been taken by another driver. Please refresh the jobs list.");
+        setIsLoadingJob(false);
+        setIsOnline(false); // Go back offline if job fetch fails
+        router.push('/jobs'); // Redirect back to jobs list
+        return;
+    }
+
+    console.log('Job data fetched:', jobData);
+
+    const parsePoint = (pointString: string | null): [number, number] | null => {
+        if (!pointString) return null;
+        const match = pointString.match(/POINT\(([-\d.]+) ([-\d.]+)\)/);
+        if (match && match.length === 3) {
+            return [parseFloat(match[2]), parseFloat(match[1])]; // [lat, lng]
+        }
+        console.warn(`Could not parse coordinates: ${pointString}`);
+        return null;
+    };
+
+    const pickupCoords = parsePoint(jobData.pickup_coordinates);
+    const destinationCoords = parsePoint(jobData.destination_coordinates);
+
+    const stops: OrderStop[] = [];
+    if (pickupCoords) {
+        stops.push({
+            id: `${jobData.id}_pickup`,
+            type: 'pickup',
+            address: jobData.pickup_address || 'Unknown Pickup Address',
+            shortAddress: `Pickup: ${jobData.pickup_address || 'Start'}`,
+            coordinates: pickupCoords,
+            status: 'pending',
+            sequence: 1,
+            items: ['Parcel']
+        });
+    }
+
+    if (destinationCoords) {
+        stops.push({
+            id: `${jobData.id}_dropoff`,
+            type: 'dropoff',
+            address: jobData.destination_address || 'Unknown Destination Address',
+            shortAddress: `Dropoff: ${jobData.destination_address || 'End'}`,
+            coordinates: destinationCoords,
+            status: 'pending',
+            sequence: 2,
+            customerName: 'Customer' // Placeholder
+        });
+    }
+
+    if (stops.length > 0) {
+        const newDelivery: DeliveryBatch = {
+            id: jobData.id.toString(),
+            label: jobData.title || `Delivery #${jobData.id.toString().substring(0, 4)}`,
+            stops: stops,
+            estimatedTotalTime: jobData.time || 'N/A',
+            estimatedTotalDistance: jobData.distance || 'N/A',
+        };
+        
+        const initialStatuses: Record<string, OrderStop['status']> = {};
+        newDelivery.stops.forEach(stop => {
+            initialStatuses[stop.id] = stop.status;
+        });
+        
+        setCurrentDelivery(newDelivery);
+        setStopStatuses(initialStatuses);
+        setCurrentStopIndex(0);
+        setActiveJobId(jobId);
+        setShowConfirmationScreen(false);
+        localStorage.setItem('driverIsOnline', JSON.stringify(true));
+    } else {
+       console.error("Failed to create stops from job data, coordinates might be missing.");
+       alert("Job data is incomplete and cannot be started.");
+       setIsOnline(false);
+    }
+
+    setIsLoadingJob(false);
+  }, [supabase, router]);
+
 
   useEffect(() => {
     const autoStartParam = searchParams.get('autoStartDelivery');
     const jobIdFromParams = searchParams.get('jobId');
 
-    if (autoStartParam === 'true' && jobIdFromParams && !isOnline && !currentDelivery) {
-      console.log(`Auto-starting delivery, triggered by job ID: ${jobIdFromParams}`);
-      
-      setActiveJobId(jobIdFromParams); // Set the active job ID state
-      handleToggleOnline(true); // We call the toggle handler here to ensure localStorage is updated correctly
-
+    // Only run if the params are present and there's no active delivery
+    if (autoStartParam === 'true' && jobIdFromParams && !currentDelivery) {
+      fetchAndStartJob(jobIdFromParams);
+      // Clean up URL to prevent re-triggering on refresh
       const newPath = pathname; 
       router.replace(newPath, undefined); 
     }
-  }, [searchParams, isOnline, currentDelivery, router, pathname]);
+  }, [searchParams, currentDelivery, fetchAndStartJob, router, pathname]);
 
 
   useEffect(() => {
@@ -177,9 +269,11 @@ const HomePageContent: NextPage = () => {
 
   useEffect(() => {
     if (isOnline) {
-      if (!currentDelivery) { 
-        console.log("Driver online. Simulating fetching delivery data...");
-        setTimeout(() => {
+      // Only fetch a mock job if the driver goes online MANUALLY
+      // and doesn't already have a job assigned.
+      if (!currentDelivery && !isLoadingJob) { 
+        console.log("Driver online, no active job. Simulating fetching delivery data...");
+        const demoTimeout = setTimeout(() => {
           setCurrentDelivery(mockBatchData);
           const initialStatuses: Record<string, OrderStop['status']> = {};
           mockBatchData.stops.forEach(stop => {
@@ -188,16 +282,18 @@ const HomePageContent: NextPage = () => {
           setStopStatuses(initialStatuses);
           setCurrentStopIndex(0); 
           setShowConfirmationScreen(false);
-        }, 1000); 
+        }, 1000);
+        return () => clearTimeout(demoTimeout);
       }
     } else {
+      // "Go Offline" logic
       setCurrentDelivery(null);
       setActiveJobId(null);
       setStopStatuses({});
       setCurrentStopIndex(0);
       setShowConfirmationScreen(false);
     }
-  }, [isOnline, currentDelivery]); 
+  }, [isOnline, currentDelivery, isLoadingJob]);
 
   const currentStop = useMemo(() => {
     if (!currentDelivery) return null;
@@ -520,6 +616,10 @@ const HomePageContent: NextPage = () => {
             <Card className="shadow-lg rounded-lg bg-card/95 backdrop-blur-sm w-full max-w-sm">
               <CardContent className="pt-6">
                 {isOnline ? (
+                   isLoadingJob ?
+                   <div className="flex items-center justify-center text-muted-foreground">
+                        <RefreshCwIcon className="w-5 h-5 mr-2 animate-spin" /> Loading your delivery...
+                   </div> :
                    gpsError ? 
                    <Alert variant="destructive" className="mb-4">
                      <AlertTriangleIcon className="h-4 w-4" />
@@ -530,7 +630,7 @@ const HomePageContent: NextPage = () => {
                 ) : (
                   <p className="text-center text-muted-foreground">You are offline. Go online to find deliveries.</p>
                 )}
-                 {isOnline && !gpsError && !driverLocation && ( 
+                 {isOnline && !isLoadingJob && !gpsError && !driverLocation && ( 
                     <div className="flex items-center justify-center text-muted-foreground">
                         <NavigationIcon className="w-5 h-5 mr-2 animate-pulse" /> Acquiring GPS signal...
                     </div>
@@ -555,4 +655,6 @@ const HomePage: NextPage = () => {
 };
 
 export default HomePage;
+    
+
     
