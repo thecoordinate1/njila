@@ -27,28 +27,32 @@ export default function SignupPage() {
     setError(null);
     setMessage(null);
 
-    // NOTE: Email confirmation has been disabled for easier development.
-    // For production, you should re-enable email confirmation by adding
-    // the `emailRedirectTo` option and configure a custom SMTP provider in Supabase.
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
           full_name: fullName,
-        }
+        },
+        // For production, ensure NEXT_PUBLIC_SITE_URL is set in your environment
+        emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
       },
     });
 
     if (error) {
       setError(error.message);
     } else if (data.user) {
-      // User is signed up and logged in, redirect to home.
-      router.push('/');
-      router.refresh();
+        // For local dev where email confirmation might be off, user is logged in.
+        if (data.user.identities && data.user.identities.length === 0) {
+            setMessage("Signup successful! Please check your email to confirm your account.");
+        } else {
+             // In local dev with email confirmation disabled, this might redirect immediately.
+             router.push('/');
+             router.refresh();
+        }
     } else {
-        // Fallback for an unexpected state
-        setError("An unknown error occurred during signup. Please try again.");
+        // Fallback for an unexpected state, like when email confirmation is required.
+        setMessage("Signup successful! Please check your email to confirm your account.");
     }
 
     setLoading(false);
