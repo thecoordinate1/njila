@@ -70,8 +70,8 @@ export default function SignupPage() {
           <CardDescription>Enter your details below to get started.</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSignup} className="space-y-4" suppressHydrationWarning>
-            <div className="space-y-2">
+          <form onSubmit={handleSignup} className="space-y-4">
+            <div className="space-y-2" suppressHydrationWarning>
               <Label htmlFor="fullName">Full Name</Label>
               <Input
                 id="fullName"
@@ -82,7 +82,7 @@ export default function SignupPage() {
                 onChange={(e) => setFullName(e.target.value)}
               />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2" suppressHydrationWarning>
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
@@ -93,7 +93,7 @@ export default function SignupPage() {
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2" suppressHydrationWarning>
               <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
