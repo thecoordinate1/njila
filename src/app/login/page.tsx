@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Truck } from 'lucide-react';
+import { Truck, CheckCircle2Icon, RefreshCwIcon } from 'lucide-react';
 import Link from 'next/link';
 
 export default function LoginPage() {
@@ -18,11 +18,13 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [loginSuccess, setLoginSuccess] = useState(false);
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setLoginSuccess(false);
     
     const { error } = await supabase.auth.signInWithPassword({
       email,
@@ -31,11 +33,15 @@ export default function LoginPage() {
 
     if (error) {
       setError(error.message);
+      setLoading(false);
     } else {
-      router.push('/');
-      router.refresh(); // Important to refresh and trigger middleware/layout changes
+      setLoginSuccess(true);
+      setTimeout(() => {
+        router.push('/');
+        router.refresh(); // Important to refresh and trigger middleware/layout changes
+      }, 1500); // Wait 1.5 seconds before redirecting
     }
-    setLoading(false);
+    // setLoading remains true during success state until redirect
   };
 
   return (
@@ -60,6 +66,7 @@ export default function LoginPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                disabled={loading || loginSuccess}
               />
             </div>
             <div className="space-y-2" suppressHydrationWarning>
@@ -70,11 +77,24 @@ export default function LoginPage() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                disabled={loading || loginSuccess}
               />
             </div>
-            {error && <p className="text-sm text-red-500">{error}</p>}
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Logging in...' : 'Login'}
+            {error && <p className="text-sm text-red-500 text-center">{error}</p>}
+            <Button type="submit" className="w-full" disabled={loading || loginSuccess}>
+              {loginSuccess ? (
+                <>
+                  <CheckCircle2Icon className="mr-2 h-5 w-5" />
+                  Success! Redirecting...
+                </>
+              ) : loading ? (
+                <>
+                  <RefreshCwIcon className="mr-2 h-5 w-5 animate-spin" />
+                  Logging in...
+                </>
+              ) : (
+                'Login'
+              )}
             </Button>
           </form>
           <div className="mt-4 text-center text-sm">
