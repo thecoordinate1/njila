@@ -24,6 +24,7 @@ import {
   RouteIcon,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import axios from 'axios';
 
 interface Job {
   id: string;
@@ -34,7 +35,37 @@ interface Job {
   payout: number;
   currency: string;
   pickupAddress: string;
+  destinationAddress: string;
 }
+
+const ORS_API_KEY = process.env.NEXT_PUBLIC_ORS_API_KEY;
+
+const reverseGeocode = async (coords: [number, number]): Promise<string> => {
+  if (!ORS_API_KEY || ORS_API_KEY === 'YOUR_OPENROUTESERVICE_API_KEY_HERE') {
+      console.warn('OpenRouteService API key is missing. Cannot reverse geocode.');
+      return 'Address unavailable';
+  }
+  const [lat, lon] = coords;
+  const url = `https://api.openrouteservice.org/geocode/reverse?api_key=${ORS_API_KEY}&point.lon=${lon}&point.lat=${lat}&size=1&layers=address`;
+  try {
+    const response = await axios.get(url);
+    const addressLabel = response.data?.features?.[0]?.properties?.label;
+    return addressLabel || `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+  } catch (error) {
+    console.error("Error reverse geocoding:", error);
+    return 'Could not fetch address';
+  }
+};
+
+const parsePoint = (pointString: string | null): [number, number] | null => {
+    if (!pointString) return null;
+    const match = pointString.match(/POINT\(([-\d.]+) ([-\d.]+)\)/);
+    if (match && match.length === 3) {
+        return [parseFloat(match[2]), parseFloat(match[1])]; // [lat, lng]
+    }
+    console.warn(`Could not parse coordinates: ${pointString}`);
+    return null;
+};
 
 const JobsPage: NextPage = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -54,23 +85,39 @@ const JobsPage: NextPage = () => {
     if (error) {
       console.error('Error fetching jobs:', error);
       setJobs([]);
-    } else {
-      console.log('Supabase jobs fetch successful. Data:', data);
-      if (data) {
-        const formattedJobs = data.map((job: any) => ({
-          id: job.id.toString(),
-          title: job.title,
-          distance: job.distance,
-          time: job.time,
-          stops: job.stops,
-          payout: job.delivery_cost,
-          currency: job.currency,
-          pickupAddress: job.pickup_address,
-        }));
+    } else if (data) {
+        console.log('Supabase jobs fetch successful. Data:', data);
+        const jobsWithGeocodingPromises = data.map(async (job: any) => {
+            const pickupCoords = parsePoint(job.pickup_coordinates);
+            const destinationCoords = parsePoint(job.destination_coordinates);
+
+            let pickupAddress = job.pickup_address || 'Fetching address...';
+            if (pickupCoords && !job.pickup_address) {
+                pickupAddress = await reverseGeocode(pickupCoords);
+            }
+            
+            let destinationAddress = job.destination_address || 'Fetching address...';
+            if (destinationCoords && !job.destination_address) {
+                destinationAddress = await reverseGeocode(destinationCoords);
+            }
+
+            return {
+                id: job.id.toString(),
+                title: job.title,
+                distance: job.distance,
+                time: job.time,
+                stops: job.stops,
+                payout: job.delivery_cost,
+                currency: job.currency,
+                pickupAddress,
+                destinationAddress
+            };
+        });
+
+        const formattedJobs = await Promise.all(jobsWithGeocodingPromises);
         setJobs(formattedJobs);
-      } else {
+    } else {
         setJobs([]);
-      }
     }
     setIsLoading(false);
   }, [supabase]);
@@ -92,7 +139,6 @@ const JobsPage: NextPage = () => {
     if (!user) {
       console.error("User is not authenticated. Cannot accept job.");
       setIsAccepting(null);
-      // Optionally, add user feedback here (e.g., a toast)
       return;
     }
 
@@ -116,11 +162,9 @@ const JobsPage: NextPage = () => {
 
   const formatCurrency = (amount: number, currencyCode: string) => {
     if (currencyCode === 'ZMW') {
-      // Prepend "K" for Zambian Kwacha
       return `K${amount.toFixed(2)}`;
     }
     
-    // Fallback for other currencies using Intl.NumberFormat
     const safeCurrencyCode = currencyCode || 'USD';
     try {
       return new Intl.NumberFormat('en-US', {
@@ -128,7 +172,6 @@ const JobsPage: NextPage = () => {
         currency: safeCurrencyCode,
       }).format(amount);
     } catch (e) {
-      // Absolute fallback if currency code is invalid
       return `$${amount.toFixed(2)}`;
     }
   };
@@ -175,9 +218,12 @@ const JobsPage: NextPage = () => {
                 </div>
               </CardHeader>
               <CardContent className="pt-4 pb-4 px-5 space-y-3">
-                <div className="flex items-center text-sm text-muted-foreground">
-                  <MapPinIcon className="h-4 w-4 mr-2 text-primary flex-shrink-0" />
-                  <span><strong className="text-foreground/90">Pickup:</strong> {job.pickupAddress}</span>
+                <div className="flex items-start text-sm text-muted-foreground">
+                  <MapPinIcon className="h-4 w-4 mr-2 mt-1 text-primary flex-shrink-0" />
+                  <div>
+                    <p><strong className="text-foreground/90">Pickup:</strong> {job.pickupAddress}</p>
+                    <p><strong className="text-foreground/90">Destination:</strong> {job.destinationAddress}</p>
+                  </div>
                 </div>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
                   <div className="flex items-center text-muted-foreground">

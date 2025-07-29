@@ -139,7 +139,7 @@ const MapDisplay: React.FC<MapDisplayProps> = ({ orderCoordinates, driverLocatio
   const [isClient, setIsClient] = useState(false);
   const [routePoints, setRoutePoints] = useState<LatLngExpression[] | null>(null);
   
-  const YOUR_ORS_API_KEY = '5b3ce3597851110001cf624814648d498f8945a29cb04a972a24b149'; 
+  const YOUR_ORS_API_KEY = process.env.NEXT_PUBLIC_ORS_API_KEY;
 
   useEffect(() => {
     setIsClient(true);
@@ -157,7 +157,7 @@ const MapDisplay: React.FC<MapDisplayProps> = ({ orderCoordinates, driverLocatio
 
   useEffect(() => {
     if (!isClient || !YOUR_ORS_API_KEY || YOUR_ORS_API_KEY === 'YOUR_OPENROUTESERVICE_API_KEY_HERE') {
-      if (YOUR_ORS_API_KEY === 'YOUR_OPENROUTESERVICE_API_KEY_HERE' || YOUR_ORS_API_KEY === '') {
+      if (YOUR_ORS_API_KEY === 'YOUR_OPENROUTESERVICE_API_KEY_HERE' || !YOUR_ORS_API_KEY) {
         console.warn('OpenRouteService API key is missing or is placeholder. Routing disabled.');
       }
       setRoutePoints(null);
