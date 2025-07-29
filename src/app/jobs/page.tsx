@@ -91,13 +91,13 @@ const JobsPage: NextPage = () => {
             const pickupCoords = parsePoint(job.pickup_coordinates);
             const destinationCoords = parsePoint(job.destination_coordinates);
 
-            let pickupAddress = job.pickup_address || 'Fetching address...';
-            if (pickupCoords && !job.pickup_address) {
+            let pickupAddress = job.pickup_address;
+            if (!pickupAddress && pickupCoords) {
                 pickupAddress = await reverseGeocode(pickupCoords);
             }
             
-            let destinationAddress = job.destination_address || 'Fetching address...';
-            if (destinationCoords && !job.destination_address) {
+            let destinationAddress = job.destination_address;
+            if (!destinationAddress && destinationCoords) {
                 destinationAddress = await reverseGeocode(destinationCoords);
             }
 
@@ -109,8 +109,8 @@ const JobsPage: NextPage = () => {
                 stops: job.stops,
                 payout: job.delivery_cost,
                 currency: job.currency,
-                pickupAddress,
-                destinationAddress
+                pickupAddress: pickupAddress || 'Pickup address not specified',
+                destinationAddress: destinationAddress || 'Destination address not specified'
             };
         });
 
