@@ -63,7 +63,7 @@ const JobsPage: NextPage = () => {
           distance: job.distance,
           time: job.time,
           stops: job.stops,
-          payout: job.payout,
+          payout: job.delivery_cost,
           currency: job.currency,
           pickupAddress: job.pickup_address,
         }));
