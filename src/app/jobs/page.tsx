@@ -115,11 +115,22 @@ const JobsPage: NextPage = () => {
   };
 
   const formatCurrency = (amount: number, currencyCode: string) => {
-    const safeCurrencyCode = currencyCode || 'USD'; // Provide a fallback currency
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: safeCurrencyCode,
-    }).format(amount);
+    if (currencyCode === 'ZMW') {
+      // Prepend "K" for Zambian Kwacha
+      return `K${amount.toFixed(2)}`;
+    }
+    
+    // Fallback for other currencies using Intl.NumberFormat
+    const safeCurrencyCode = currencyCode || 'USD';
+    try {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: safeCurrencyCode,
+      }).format(amount);
+    } catch (e) {
+      // Absolute fallback if currency code is invalid
+      return `$${amount.toFixed(2)}`;
+    }
   };
 
   return (
