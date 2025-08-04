@@ -33,19 +33,6 @@ const DynamicMapDisplay = dynamic(() => import('@/components/MapDisplay'), {
   loading: () => <div className="h-full bg-muted flex items-center justify-center"><p>Loading Map...</p></div>,
 });
 
-const mockBatchData: DeliveryBatch = {
-  id: 'BATCH_LSK001',
-  label: 'Lusaka Central Drops',
-  stops: [
-    { id: 'LSK_S1', type: 'pickup', address: 'Kamwala Market, Independence Ave, Lusaka', shortAddress: 'Kamwala Market', coordinates: [-15.4320, 28.2910], status: 'pending', sequence: 1, items: ['Groceries Basket'] },
-    { id: 'LSK_S2', type: 'dropoff', address: 'EastPark Mall, Great East Rd, Lusaka', shortAddress: 'EastPark Mall', coordinates: [-15.3990, 28.3410], status: 'pending', sequence: 2, items: ['Groceries Basket'], customerName: 'Miriam Banda' },
-    { id: 'LSK_S3', type: 'pickup', address: 'University Teaching Hospital (UTH), Nationalist Rd, Lusaka', shortAddress: 'UTH Lusaka', coordinates: [-15.4050, 28.3000], status: 'pending', sequence: 3, items: ['Medical Supplies'] },
-    { id: 'LSK_S4', type: 'dropoff', address: 'Manda Hill Mall, Great East Rd, Lusaka', shortAddress: 'Manda Hill Mall', coordinates: [-15.4020, 28.3190], status: 'pending', sequence: 4, items: ['Medical Supplies'], customerName: 'John Phiri' },
-  ],
-  estimatedTotalTime: '1hr 30mins',
-  estimatedTotalDistance: '18.5 km',
-};
-
 // Hardcoded correct delivery code for simulation
 const CORRECT_DELIVERY_CODE = "123456";
 
@@ -268,32 +255,15 @@ const HomePageContent: NextPage = () => {
   }, []);
 
   useEffect(() => {
-    if (isOnline) {
-      // Only fetch a mock job if the driver goes online MANUALLY
-      // and doesn't already have a job assigned.
-      if (!currentDelivery && !isLoadingJob) { 
-        console.log("Driver online, no active job. Simulating fetching delivery data...");
-        const demoTimeout = setTimeout(() => {
-          setCurrentDelivery(mockBatchData);
-          const initialStatuses: Record<string, OrderStop['status']> = {};
-          mockBatchData.stops.forEach(stop => {
-            initialStatuses[stop.id] = stop.status;
-          });
-          setStopStatuses(initialStatuses);
-          setCurrentStopIndex(0); 
-          setShowConfirmationScreen(false);
-        }, 1000);
-        return () => clearTimeout(demoTimeout);
-      }
-    } else {
-      // "Go Offline" logic
+    // This effect now only handles the "Go Offline" case
+    if (!isOnline) {
       setCurrentDelivery(null);
       setActiveJobId(null);
       setStopStatuses({});
       setCurrentStopIndex(0);
       setShowConfirmationScreen(false);
     }
-  }, [isOnline, currentDelivery, isLoadingJob]);
+  }, [isOnline]);
 
   const currentStop = useMemo(() => {
     if (!currentDelivery) return null;
@@ -655,6 +625,4 @@ const HomePage: NextPage = () => {
 };
 
 export default HomePage;
-    
-
     
