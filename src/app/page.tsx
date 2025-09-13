@@ -106,9 +106,7 @@ const HomePageContent: NextPage = () => {
 
   const handleRowClick = (order: ActiveOrder) => {
     if (Array.isArray(order.location)) {
-      console.log(`Navigating to details for order ${order.id}`);
-      // In a real app, you would navigate to a details page:
-      // router.push(`/orders/${order.id}`);
+      router.push(`/orders/${order.id}`);
     }
   };
   
