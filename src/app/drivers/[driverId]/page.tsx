@@ -20,12 +20,12 @@ interface DriverDetailsPageProps {
 
 // Mock data - in a real app, this would be fetched from an API
 const driversData = {
-  'DRV-001': { id: 'DRV-001', name: 'John Tembo', avatarUrl: 'https://placehold.co/100x100/E0F8F8/006666?text=JT', status: 'Available' as const, phone: '+260977123456', rating: 4.9, totalDeliveries: 152, memberSince: '2022-08-15' },
-  'DRV-002': { id: 'DRV-002', name: 'Maria Phiri', avatarUrl: 'https://placehold.co/100x100/E0F8F8/006666?text=MP', status: 'Making delivery' as const, currentOrderId: 'ORD-002', phone: '+260977234567', rating: 4.8, totalDeliveries: 210, memberSince: '2021-11-20' },
-  'DRV-003': { id: 'DRV-003', name: 'David Banda', avatarUrl: 'https://placehold.co/100x100/E0F8F8/006666?text=DB', status: 'Making delivery' as const, currentOrderId: 'ORD-005', phone: '+260977345678', rating: 4.9, totalDeliveries: 180, memberSince: '2022-01-10' },
-  'DRV-004': { id: 'DRV-004', name: 'Grace Zulu', avatarUrl: 'https://placehold.co/100x100/E0F8F8/006666?text=GZ', status: 'Available' as const, phone: '+260977456789', rating: 4.7, totalDeliveries: 95, memberSince: '2023-03-05' },
-  'DRV-005': { id: 'DRV-005', name: 'Peter Mwale', avatarUrl: 'https://placehold.co/100x100/E0F8F8/006666?text=PM', status: 'Available' as const, phone: '+260977567890', rating: 5.0, totalDeliveries: 320, memberSince: '2020-05-25' },
-  'DRV-006': { id: 'DRV-006', name: 'Charity Sakala', avatarUrl: 'https://placehold.co/100x100/E0F8F8/006666?text=CS', status: 'Making delivery' as const, currentOrderId: 'ORD-001', phone: '+260977678901', rating: 4.8, totalDeliveries: 115, memberSince: '2022-10-30' },
+  'DRV-001': { id: 'DRV-001', name: 'John Tembo', avatarUrl: 'https://placehold.co/100x100/E0F8F8/006666?text=JT', status: 'Available' as const, phone: '+260977123456', rating: 4.9, totalDeliveries: 152, memberSince: '2022-08-15', totalPayout: 22800, cancelledDeliveries: 5 },
+  'DRV-002': { id: 'DRV-002', name: 'Maria Phiri', avatarUrl: 'https://placehold.co/100x100/E0F8F8/006666?text=MP', status: 'Making delivery' as const, currentOrderId: 'ORD-002', phone: '+260977234567', rating: 4.8, totalDeliveries: 210, memberSince: '2021-11-20', totalPayout: 35700, cancelledDeliveries: 10 },
+  'DRV-003': { id: 'DRV-003', name: 'David Banda', avatarUrl: 'https://placehold.co/100x100/E0F8F8/006666?text=DB', status: 'Making delivery' as const, currentOrderId: 'ORD-005', phone: '+260977345678', rating: 4.9, totalDeliveries: 180, memberSince: '2022-01-10', totalPayout: 28800, cancelledDeliveries: 8 },
+  'DRV-004': { id: 'DRV-004', name: 'Grace Zulu', avatarUrl: 'https://placehold.co/100x100/E0F8F8/006666?text=GZ', status: 'Available' as const, phone: '+260977456789', rating: 4.7, totalDeliveries: 95, memberSince: '2023-03-05', totalPayout: 13205, cancelledDeliveries: 12 },
+  'DRV-005': { id: 'DRV-005', name: 'Peter Mwale', avatarUrl: 'https://placehold.co/100x100/E0F8F8/006666?text=PM', status: 'Available' as const, phone: '+260977567890', rating: 5.0, totalDeliveries: 320, memberSince: '2020-05-25', totalPayout: 54400, cancelledDeliveries: 3 },
+  'DRV-006': { id: 'DRV-006', name: 'Charity Sakala', avatarUrl: 'https://placehold.co/100x100/E0F8F8/006666?text=CS', status: 'Making delivery' as const, currentOrderId: 'ORD-001', phone: '+260977678901', rating: 4.8, totalDeliveries: 115, memberSince: '2022-10-30', totalPayout: 17825, cancelledDeliveries: 6 },
 };
 
 const fullHistory = [
@@ -54,6 +54,14 @@ const DriverDetailsPage: NextPage<DriverDetailsPageProps> = ({ params }) => {
       </div>
     );
   }
+
+  const completionRate = driverData.totalDeliveries > 0 
+    ? ((driverData.totalDeliveries - driverData.cancelledDeliveries) / driverData.totalDeliveries) * 100 
+    : 0;
+    
+  const averagePayout = driverData.totalDeliveries > 0 
+    ? driverData.totalPayout / (driverData.totalDeliveries - driverData.cancelledDeliveries) 
+    : 0;
 
   return (
     <div className="relative min-h-screen flex flex-col bg-muted/30">
@@ -129,14 +137,22 @@ const DriverDetailsPage: NextPage<DriverDetailsPageProps> = ({ params }) => {
                     Performance Stats
                 </CardTitle>
             </CardHeader>
-            <CardContent className="grid grid-cols-2 gap-4 text-center">
+            <CardContent className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-center">
                 <div className="p-3 bg-background rounded-lg">
                     <p className="text-2xl font-bold">{driverData.totalDeliveries}</p>
-                    <p className="text-sm text-muted-foreground">Total Deliveries</p>
+                    <p className="text-sm text-muted-foreground">Total Jobs</p>
                 </div>
                  <div className="p-3 bg-background rounded-lg">
                     <p className="text-2xl font-bold">{driverData.rating.toFixed(1)}/5.0</p>
-                    <p className="text-sm text-muted-foreground">Average Rating</p>
+                    <p className="text-sm text-muted-foreground">Avg. Rating</p>
+                </div>
+                 <div className="p-3 bg-background rounded-lg">
+                    <p className="text-2xl font-bold">{completionRate.toFixed(1)}%</p>
+                    <p className="text-sm text-muted-foreground">Completion</p>
+                </div>
+                <div className="p-3 bg-background rounded-lg">
+                    <p className="text-2xl font-bold">ZMW {averagePayout.toFixed(2)}</p>
+                    <p className="text-sm text-muted-foreground">Avg. Payout</p>
                 </div>
             </CardContent>
         </Card>
