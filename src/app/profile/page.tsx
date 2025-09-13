@@ -241,8 +241,10 @@ const ProfilePage: NextPage = () => {
                 </div>
               </CardContent>
               <CardFooter className="bg-muted/50 p-4 border-t">
-                <Button className="w-full" variant="outline">
-                  View Payout History
+                <Button asChild className="w-full" variant="outline">
+                  <Link href="/profile/payout-history">
+                    View Payout History
+                  </Link>
                 </Button>
               </CardFooter>
             </Card>
