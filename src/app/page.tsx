@@ -61,20 +61,21 @@ const HomePageContent: NextPage = () => {
 
   useEffect(() => {
     const fetchDriverName = async () => {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-            const { data, error } = await supabase
-                .from('drivers')
-                .select('full_name')
-                .eq('id', user.id)
-                .single();
+        // const { data: { user } } = await supabase.auth.getUser();
+        // if (user) {
+        //     const { data, error } = await supabase
+        //         .from('drivers')
+        //         .select('full_name')
+        //         .eq('id', user.id)
+        //         .single();
 
-            if (data && data.full_name) {
-                setDriverName(data.full_name);
-            } else if (user.email) {
-                setDriverName(user.email);
-            }
-        }
+        //     if (data && data.full_name) {
+        //         setDriverName(data.full_name);
+        //     } else if (user.email) {
+        //         setDriverName(user.email);
+        //     }
+        // }
+        setDriverName("Demo Driver");
     };
     fetchDriverName();
   }, [supabase]);
@@ -625,4 +626,3 @@ const HomePage: NextPage = () => {
 };
 
 export default HomePage;
-    

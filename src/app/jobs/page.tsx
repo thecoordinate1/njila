@@ -134,17 +134,17 @@ const JobsPage: NextPage = () => {
     setIsAccepting(jobId);
     console.log(`Accepted job: ${jobId}`);
 
-    const { data: { user } } = await supabase.auth.getUser();
+    // const { data: { user } } = await supabase.auth.getUser();
 
-    if (!user) {
-      console.error("User is not authenticated. Cannot accept job.");
-      setIsAccepting(null);
-      return;
-    }
+    // if (!user) {
+    //   console.error("User is not authenticated. Cannot accept job.");
+    //   setIsAccepting(null);
+    //   return;
+    // }
 
     const { error } = await supabase
       .from('orders')
-      .update({ status: 'driving picking up', driver_id: user.id })
+      .update({ status: 'driving picking up' /*, driver_id: user.id*/ })
       .eq('id', jobId)
       .select();
 

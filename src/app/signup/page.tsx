@@ -27,34 +27,38 @@ export default function SignupPage() {
     setError(null);
     setMessage(null);
 
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: fullName,
-        },
-        // For production, ensure NEXT_PUBLIC_SITE_URL is set in your environment
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
-      },
-    });
+    // const { data, error } = await supabase.auth.signUp({
+    //   email,
+    //   password,
+    //   options: {
+    //     data: {
+    //       full_name: fullName,
+    //     },
+    //     // For production, ensure NEXT_PUBLIC_SITE_URL is set in your environment
+    //     emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
+    //   },
+    // });
 
-    if (error) {
-      setError(error.message);
-    } else if (data.user) {
-        // For local dev where email confirmation might be off, user is logged in.
-        if (data.user.identities && data.user.identities.length === 0) {
-            setMessage("Signup successful! Please check your email to confirm your account.");
-        } else {
-             // In local dev with email confirmation disabled, this might redirect immediately.
-             router.push('/');
-             router.refresh();
-        }
-    } else {
-        // Fallback for an unexpected state, like when email confirmation is required.
-        setMessage("Signup successful! Please check your email to confirm your account.");
-    }
+    // if (error) {
+    //   setError(error.message);
+    // } else if (data.user) {
+    //     // For local dev where email confirmation might be off, user is logged in.
+    //     if (data.user.identities && data.user.identities.length === 0) {
+    //         setMessage("Signup successful! Please check your email to confirm your account.");
+    //     } else {
+    //          // In local dev with email confirmation disabled, this might redirect immediately.
+    //          router.push('/');
+    //          router.refresh();
+    //     }
+    // } else {
+    //     // Fallback for an unexpected state, like when email confirmation is required.
+    //     setMessage("Signup successful! Please check your email to confirm your account.");
+    // }
 
+    // setLoading(false);
+    
+    // Temp logic for UI testing
+    setMessage("Signup is currently disabled. Please use the login page.");
     setLoading(false);
   };
 

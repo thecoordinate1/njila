@@ -9,43 +9,43 @@ export async function middleware(request: NextRequest) {
     },
   })
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return request.cookies.get(name)?.value
-        },
-        set(name: string, value: string, options: CookieOptions) {
-          request.cookies.set({ name, value, ...options });
-          response = NextResponse.next({ request: { headers: request.headers }});
-          response.cookies.set({ name, value, ...options });
-        },
-        remove(name: string, options: CookieOptions) {
-          request.cookies.set({ name, value: '', ...options });
-          response = NextResponse.next({ request: { headers: request.headers }});
-          response.cookies.set({ name, value: '', ...options });
-        },
-      },
-    }
-  );
+  // const supabase = createServerClient(
+  //   process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  //   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  //   {
+  //     cookies: {
+  //       get(name: string) {
+  //         return request.cookies.get(name)?.value
+  //       },
+  //       set(name: string, value: string, options: CookieOptions) {
+  //         request.cookies.set({ name, value, ...options });
+  //         response = NextResponse.next({ request: { headers: request.headers }});
+  //         response.cookies.set({ name, value, ...options });
+  //       },
+  //       remove(name: string, options: CookieOptions) {
+  //         request.cookies.set({ name, value: '', ...options });
+  //         response = NextResponse.next({ request: { headers: request.headers }});
+  //         response.cookies.set({ name, value: '', ...options });
+  //       },
+  //     },
+  //   }
+  // );
 
-  const { data: { user } } = await supabase.auth.getUser();
+  // const { data: { user } } = await supabase.auth.getUser();
 
-  const currentPath = request.nextUrl.pathname;
+  // const currentPath = request.nextUrl.pathname;
 
-  const authRoutes = ['/login', '/signup'];
+  // const authRoutes = ['/login', '/signup'];
 
-  // If user is not signed in and trying to access a protected route
-  if (!user && !authRoutes.includes(currentPath)) {
-    return NextResponse.redirect(new URL('/login?message=Please sign in to access this page.', request.url));
-  }
+  // // If user is not signed in and trying to access a protected route
+  // if (!user && !authRoutes.includes(currentPath)) {
+  //   return NextResponse.redirect(new URL('/login?message=Please sign in to access this page.', request.url));
+  // }
 
-  // If user is signed in and trying to access auth routes (login, signup)
-  if (user && authRoutes.includes(currentPath)) {
-    return NextResponse.redirect(new URL('/', request.url));
-  }
+  // // If user is signed in and trying to access auth routes (login, signup)
+  // if (user && authRoutes.includes(currentPath)) {
+  //   return NextResponse.redirect(new URL('/', request.url));
+  // }
 
   return response;
 }

@@ -26,22 +26,30 @@ export default function LoginPage() {
     setError(null);
     setLoginSuccess(false);
     
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    // const { error } = await supabase.auth.signInWithPassword({
+    //   email,
+    //   password,
+    // });
 
-    if (error) {
-      setError(error.message);
-      setLoading(false);
-    } else {
-      setLoginSuccess(true);
-      setTimeout(() => {
-        router.push('/');
-        router.refresh(); // Important to refresh and trigger middleware/layout changes
-      }, 1500); // Wait 1.5 seconds before redirecting
-    }
+    // if (error) {
+    //   setError(error.message);
+    //   setLoading(false);
+    // } else {
+    //   setLoginSuccess(true);
+    //   setTimeout(() => {
+    //     router.push('/');
+    //     router.refresh(); // Important to refresh and trigger middleware/layout changes
+    //   }, 1500); // Wait 1.5 seconds before redirecting
+    // }
     // setLoading remains true during success state until redirect
+
+    // Temp logic for UI testing without auth
+    console.log("Simulating login...");
+    setLoginSuccess(true);
+    setTimeout(() => {
+      router.push('/');
+      router.refresh();
+    }, 1500);
   };
 
   return (

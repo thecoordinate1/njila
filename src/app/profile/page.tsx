@@ -29,45 +29,58 @@ const ProfilePage: NextPage = () => {
   const router = useRouter();
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [profileExists, setProfileExists] = useState(false);
+  const [profileExists, setProfileExists] = useState(true); // Default to true to show placeholder data
 
   useEffect(() => {
     const fetchProfile = async () => {
       setLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
+      // const { data: { user } } = await supabase.auth.getUser();
 
-      if (user) {
-        const { data, error } = await supabase
-          .from('drivers')
-          .select('*')
-          .eq('id', user.id)
-          .single();
+      // if (user) {
+      //   const { data, error } = await supabase
+      //     .from('drivers')
+      //     .select('*')
+      //     .eq('id', user.id)
+      //     .single();
 
-        if (data) {
-          setProfile({
-            ...data,
-            email: user.email,
-            member_since: user.created_at ? new Date(user.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : null,
-          });
-          setProfileExists(true);
-        } else {
-          if (error && error.code !== 'PGRST116') { // PGRST116 means no rows found, which is expected.
-            console.error('Error fetching profile:', error);
-          }
-          setProfile({
-            full_name: user.user_metadata?.full_name || 'New Driver',
-            email: user.email,
-            phone: null,
-            vehicle_model: null,
-            license_plate: null,
-            insurance_verified: false,
-            emergency_contact_name: null,
-            emergency_contact_phone: null,
-            member_since: user.created_at ? new Date(user.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : null,
-          });
-          setProfileExists(false);
-        }
-      }
+      //   if (data) {
+      //     setProfile({
+      //       ...data,
+      //       email: user.email,
+      //       member_since: user.created_at ? new Date(user.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : null,
+      //     });
+      //     setProfileExists(true);
+      //   } else {
+      //     if (error && error.code !== 'PGRST116') { // PGRST116 means no rows found, which is expected.
+      //       console.error('Error fetching profile:', error);
+      //     }
+      //     setProfile({
+      //       full_name: user.user_metadata?.full_name || 'New Driver',
+      //       email: user.email,
+      //       phone: null,
+      //       vehicle_model: null,
+      //       license_plate: null,
+      //       insurance_verified: false,
+      //       emergency_contact_name: null,
+      //       emergency_contact_phone: null,
+      //       member_since: user.created_at ? new Date(user.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : null,
+      //     });
+      //     setProfileExists(false);
+      //   }
+      // }
+      
+      // Placeholder data for when auth is disabled
+      setProfile({
+        full_name: 'Demo Driver',
+        email: 'driver@example.com',
+        phone: '+260 977 123456',
+        vehicle_model: 'Toyota Corolla',
+        license_plate: 'ALE 1234',
+        insurance_verified: true,
+        emergency_contact_name: 'Jane Doe',
+        emergency_contact_phone: '+260 966 654321',
+        member_since: 'October 26, 2023'
+      });
       setLoading(false);
     };
 
@@ -75,33 +88,36 @@ const ProfilePage: NextPage = () => {
   }, [supabase]);
   
   const handleRegisterDriver = async () => {
-    setLoading(true);
-    const { data: { user } } = await supabase.auth.getUser();
+    // setLoading(true);
+    // const { data: { user } } = await supabase.auth.getUser();
 
-    if (user) {
-      const { error } = await supabase.from('drivers').insert({ 
-        id: user.id, 
-        email: user.email, 
-        full_name: user.user_metadata?.full_name 
-      });
+    // if (user) {
+    //   const { error } = await supabase.from('drivers').insert({ 
+    //     id: user.id, 
+    //     email: user.email, 
+    //     full_name: user.user_metadata?.full_name 
+    //   });
 
-      if (error) {
-        console.error('Error creating driver profile:', error.message);
-        setLoading(false);
-        // You could add a user-facing error message here
-      } else {
-        // Success! router.refresh() re-runs the useEffect to get the new profile data.
-        router.refresh(); 
-      }
-    } else {
-      setLoading(false);
-    }
+    //   if (error) {
+    //     console.error('Error creating driver profile:', error.message);
+    //     setLoading(false);
+    //     // You could add a user-facing error message here
+    //   } else {
+    //     // Success! router.refresh() re-runs the useEffect to get the new profile data.
+    //     router.refresh(); 
+    //   }
+    // } else {
+    //   setLoading(false);
+    // }
+    console.log("Driver registration is currently disabled.");
   };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    // await supabase.auth.signOut();
+    // router.push('/login');
+    // router.refresh();
+    console.log("Logout is currently disabled.");
     router.push('/login');
-    router.refresh();
   };
 
   if (loading) {
