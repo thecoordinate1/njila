@@ -1,12 +1,13 @@
 
 'use client';
 
+import { useState } from 'react';
 import type { NextPage } from 'next';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ArrowLeft, Phone, Truck, History, Star, TrendingUp, Link as LinkIcon } from 'lucide-react';
+import { ArrowLeft, Phone, Truck, History, Star, TrendingUp, Link as LinkIcon, ChevronDown, ChevronUp } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
@@ -27,10 +28,13 @@ const driversData = {
   'DRV-006': { id: 'DRV-006', name: 'Charity Sakala', avatarUrl: 'https://placehold.co/100x100/E0F8F8/006666?text=CS', status: 'Making delivery' as const, currentOrderId: 'ORD-001', phone: '+260977678901', rating: 4.8, totalDeliveries: 115, memberSince: '2022-10-30' },
 };
 
-const recentHistory = [
+const fullHistory = [
     { id: 'LSK-HIST-001', destination: 'Taj Pamodzi Hotel', payout: 185.25, date: 'Yesterday', status: 'Completed' as const },
     { id: 'LSK-HIST-003', destination: 'Manda Hill Mall', payout: 75.50, date: '2 days ago', status: 'Completed' as const },
     { id: 'LSK-HIST-004', destination: 'University of Zambia', payout: 120.00, date: '2 days ago', status: 'Cancelled' as const },
+    { id: 'LSK-HIST-005', destination: 'Levy Junction Mall', payout: 65.00, date: '3 days ago', status: 'Completed' as const },
+    { id: 'LSK-HIST-006', destination: 'Soweto Market', payout: 115.75, date: '4 days ago', status: 'Completed' as const },
+    { id: 'LSK-HIST-007', destination: 'Civic Centre', payout: 55.25, date: '5 days ago', status: 'Cancelled' as const },
 ]
 
 
@@ -38,6 +42,9 @@ const DriverDetailsPage: NextPage<DriverDetailsPageProps> = ({ params }) => {
   const router = useRouter();
   const { driverId } = params;
   const driverData = driversData[driverId as keyof typeof driversData];
+  const [showFullHistory, setShowFullHistory] = useState(false);
+
+  const historyToShow = showFullHistory ? fullHistory : fullHistory.slice(0, 3);
 
   if (!driverData) {
     return (
@@ -139,12 +146,12 @@ const DriverDetailsPage: NextPage<DriverDetailsPageProps> = ({ params }) => {
             <CardHeader>
                 <CardTitle className="flex items-center">
                     <History className="mr-3 h-6 w-6" />
-                    Recent History
+                    Delivery History
                 </CardTitle>
             </CardHeader>
             <CardContent>
                 <div className="space-y-3">
-                    {recentHistory.map(order => (
+                    {historyToShow.map(order => (
                         <div key={order.id} className="flex justify-between items-center p-3 bg-background rounded-lg">
                             <div>
                                 <p className="font-semibold">{order.destination}</p>
@@ -163,6 +170,27 @@ const DriverDetailsPage: NextPage<DriverDetailsPageProps> = ({ params }) => {
                     ))}
                 </div>
             </CardContent>
+             {fullHistory.length > 3 && (
+                <CardFooter className="p-3 border-t bg-muted/50">
+                    <Button
+                        variant="ghost"
+                        className="w-full text-primary hover:text-primary"
+                        onClick={() => setShowFullHistory(!showFullHistory)}
+                    >
+                        {showFullHistory ? (
+                            <>
+                                <ChevronUp className="mr-2 h-4 w-4" />
+                                Show Less
+                            </>
+                        ) : (
+                            <>
+                                <ChevronDown className="mr-2 h-4 w-4" />
+                                Show More
+                            </>
+                        )}
+                    </Button>
+                </CardFooter>
+            )}
         </Card>
 
       </main>
