@@ -1,6 +1,7 @@
 
 'use client';
 
+import { useState } from 'next/navigation';
 import type { NextPage } from 'next';
 import BottomNavbar from '@/components/BottomNavbar';
 import {
@@ -10,6 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { HistoryIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { LatLngExpression } from 'leaflet';
@@ -37,6 +39,13 @@ const orderHistoryData: OrderHistory[] = [
 
 
 const HistoryPage: NextPage = () => {
+  const [filter, setFilter] = useState<'All' | 'Completed' | 'Cancelled'>('All');
+
+  const filteredOrders = orderHistoryData.filter(order => {
+    if (filter === 'All') return true;
+    return order.status === filter;
+  });
+
   return (
     <div className="relative min-h-screen flex flex-col bg-muted/30">
       <header className="sticky top-0 z-30 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -45,9 +54,15 @@ const HistoryPage: NextPage = () => {
         </div>
       </header>
       <main className="flex-grow flex flex-col items-center p-4 md:p-6 pb-32">
-         <div className="w-full max-w-2xl space-y-6">
-              {orderHistoryData.length > 0 ? (
-                orderHistoryData.map((order) => (
+         <div className="w-full max-w-2xl">
+            <div className="flex justify-center space-x-2 mb-6 bg-muted p-2 rounded-lg">
+                <Button variant={filter === 'All' ? 'default' : 'ghost'} className="flex-1" onClick={() => setFilter('All')}>All</Button>
+                <Button variant={filter === 'Completed' ? 'default' : 'ghost'} className="flex-1" onClick={() => setFilter('Completed')}>Completed</Button>
+                <Button variant={filter === 'Cancelled' ? 'default' : 'ghost'} className="flex-1" onClick={() => setFilter('Cancelled')}>Cancelled</Button>
+            </div>
+            <div className="space-y-6">
+              {filteredOrders.length > 0 ? (
+                filteredOrders.map((order) => (
                   <Card key={order.id} className="overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 rounded-lg">
                     <CardHeader className="pb-3 pt-5 px-5">
                      <div className="flex justify-between items-center mb-1">
@@ -80,11 +95,12 @@ const HistoryPage: NextPage = () => {
               ) : (
                 <div className="text-center py-16 rounded-lg bg-card shadow-sm">
                   <HistoryIcon className="mx-auto h-16 w-16 text-muted-foreground/70 mb-5" />
-                  <h3 className="text-2xl font-semibold mb-2 text-foreground/90">No Order History</h3>
-                  <p className="text-sm text-muted-foreground px-4">Completed and cancelled orders will appear here once they are processed.</p>
+                  <h3 className="text-2xl font-semibold mb-2 text-foreground/90">No {filter} Orders</h3>
+                  <p className="text-sm text-muted-foreground px-4">There are no orders with this status in your history.</p>
                 </div>
               )}
             </div>
+          </div>
       </main>
       <BottomNavbar />
     </div>
