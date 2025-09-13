@@ -18,26 +18,27 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
 type PayoutStatus = 'Paid' | 'Pending';
+type TimeFilter = 'All Time' | 'Last 30 Days' | 'This Month';
 
 const payoutHistoryData = [
-  { id: 'PAY-006', date: 'October 27, 2023', amount: 250.75, status: 'Pending' as const, method: 'Mobile Money' },
-  { id: 'PAY-001', date: 'October 20, 2023', amount: 480.50, status: 'Paid' as const, method: 'Mobile Money' },
-  { id: 'PAY-002', date: 'October 13, 2023', amount: 512.00, status: 'Paid' as const, method: 'Mobile Money' },
-  { id: 'PAY-003', date: 'October 06, 2023', amount: 450.75, status: 'Paid' as const, method: 'Bank Transfer' },
-  { id: 'PAY-004', date: 'September 29, 2023', amount: 495.25, status: 'Paid' as const, method: 'Mobile Money' },
-  { id: 'PAY-005', date: 'September 22, 2023', amount: 530.00, status: 'Paid' as const, method: 'Mobile Money' },
+  { id: 'PAY-007', date: new Date().toISOString(), amount: 125.50, status: 'Pending' as const, method: 'Mobile Money' },
+  { id: 'PAY-006', date: new Date(new Date().setDate(new Date().getDate() - 2)).toISOString(), amount: 250.75, status: 'Pending' as const, method: 'Mobile Money' },
+  { id: 'PAY-001', date: new Date(new Date().setDate(new Date().getDate() - 7)).toISOString(), amount: 480.50, status: 'Paid' as const, method: 'Mobile Money' },
+  { id: 'PAY-002', date: new Date(new Date().setDate(new Date().getDate() - 14)).toISOString(), amount: 512.00, status: 'Paid' as const, method: 'Mobile Money' },
+  { id: 'PAY-003', date: new Date(new Date().setDate(new Date().getDate() - 21)).toISOString(), amount: 450.75, status: 'Paid' as const, method: 'Bank Transfer' },
+  { id: 'PAY-004', date: new Date(new Date().setDate(new Date().getDate() - 40)).toISOString(), amount: 495.25, status: 'Paid' as const, method: 'Mobile Money' },
+  { id: 'PAY-005', date: new Date(new Date().setDate(new Date().getDate() - 60)).toISOString(), amount: 530.00, status: 'Paid' as const, method: 'Mobile Money' },
 ];
 
 const PayoutHistoryPage: NextPage = () => {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<PayoutStatus | 'All'>('All');
+  const [timeFilter, setTimeFilter] = useState<TimeFilter>('All Time');
 
-  const totalEarnings = payoutHistoryData
-    .filter(p => p.status === 'Paid')
-    .reduce((sum, p) => sum + p.amount, 0);
-  
-  const thisMonthPayouts = 5820.00; // Placeholder
+  const now = new Date();
+  const thirtyDaysAgo = new Date(new Date().setDate(now.getDate() - 30));
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
   const filteredPayouts = payoutHistoryData
     .filter(payout => {
@@ -45,16 +46,41 @@ const PayoutHistoryPage: NextPage = () => {
       return payout.status === statusFilter;
     })
     .filter(payout => {
+        if (timeFilter === 'All Time') return true;
+        const payoutDate = new Date(payout.date);
+        if (timeFilter === 'Last 30 Days') return payoutDate >= thirtyDaysAgo;
+        if (timeFilter === 'This Month') return payoutDate >= startOfMonth;
+        return true;
+    })
+    .filter(payout => {
       const query = searchQuery.toLowerCase();
+      const payoutDate = new Date(payout.date).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      });
       return (
         payout.id.toLowerCase().includes(query) ||
-        payout.date.toLowerCase().includes(query) ||
+        payoutDate.toLowerCase().includes(query) ||
         payout.amount.toString().includes(query) ||
         payout.method.toLowerCase().includes(query)
       );
     });
 
-  const filterOptions: (PayoutStatus | 'All')[] = ['All', 'Paid', 'Pending'];
+  const totalPaidOut = payoutHistoryData
+    .filter(p => p.status === 'Paid')
+    .reduce((sum, p) => sum + p.amount, 0);
+  
+  const pendingPayout = payoutHistoryData
+    .filter(p => p.status === 'Pending')
+    .reduce((sum, p) => sum + p.amount, 0);
+
+  const thisMonthEarnings = payoutHistoryData
+    .filter(p => new Date(p.date) >= startOfMonth && p.status === 'Paid')
+    .reduce((sum, p) => sum + p.amount, 0);
+
+  const statusFilterOptions: (PayoutStatus | 'All')[] = ['All', 'Paid', 'Pending'];
+  const timeFilterOptions: TimeFilter[] = ['All Time', 'Last 30 Days', 'This Month'];
 
   return (
     <div className="relative min-h-screen flex flex-col bg-muted/30">
@@ -74,14 +100,18 @@ const PayoutHistoryPage: NextPage = () => {
                     Earnings Overview
                 </CardTitle>
             </CardHeader>
-            <CardContent className="grid grid-cols-2 gap-4 text-center">
+            <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
                 <div className="p-4 bg-background rounded-lg">
-                    <p className="text-2xl font-bold">ZMW {totalEarnings.toFixed(2)}</p>
+                    <p className="text-2xl font-bold">ZMW {totalPaidOut.toFixed(2)}</p>
                     <p className="text-sm text-muted-foreground">Total Paid Out</p>
                 </div>
+                <div className="p-4 bg-background rounded-lg">
+                    <p className="text-2xl font-bold text-amber-600">ZMW {pendingPayout.toFixed(2)}</p>
+                    <p className="text-sm text-muted-foreground">Pending Payout</p>
+                </div>
                  <div className="p-4 bg-background rounded-lg">
-                    <p className="text-2xl font-bold">ZMW {thisMonthPayouts.toFixed(2)}</p>
-                    <p className="text-sm text-muted-foreground">Total All-Time</p>
+                    <p className="text-2xl font-bold">ZMW {thisMonthEarnings.toFixed(2)}</p>
+                    <p className="text-sm text-muted-foreground">This Month</p>
                 </div>
             </CardContent>
         </Card>
@@ -92,8 +122,8 @@ const PayoutHistoryPage: NextPage = () => {
                 <CardDescription>A complete record of your payouts.</CardDescription>
             </CardHeader>
             <CardContent>
-                 <div className="flex justify-between items-center mb-6 gap-4">
-                    <div className="relative flex-grow">
+                 <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+                    <div className="relative flex-grow w-full">
                         <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                         <Input
                             type="search"
@@ -103,21 +133,38 @@ const PayoutHistoryPage: NextPage = () => {
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
                     </div>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="outline" className="w-48 justify-between shrink-0">
-                                Filter: {statusFilter}
-                                <ChevronDown className="h-4 w-4" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent className="w-48">
-                            {filterOptions.map((option) => (
-                                <DropdownMenuItem key={option} onSelect={() => setStatusFilter(option)}>
-                                    {option}
-                                </DropdownMenuItem>
-                            ))}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                    <div className="flex gap-4 w-full md:w-auto">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" className="w-full justify-between">
+                                    Status: {statusFilter}
+                                    <ChevronDown className="h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent className="w-48">
+                                {statusFilterOptions.map((option) => (
+                                    <DropdownMenuItem key={option} onSelect={() => setStatusFilter(option)}>
+                                        {option}
+                                    </DropdownMenuItem>
+                                ))}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" className="w-full justify-between">
+                                    Date: {timeFilter}
+                                    <ChevronDown className="h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent className="w-48">
+                                {timeFilterOptions.map((option) => (
+                                    <DropdownMenuItem key={option} onSelect={() => setTimeFilter(option)}>
+                                        {option}
+                                    </DropdownMenuItem>
+                                ))}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
                  </div>
                  <div className="space-y-4">
                     {filteredPayouts.length > 0 ? (
@@ -135,7 +182,7 @@ const PayoutHistoryPage: NextPage = () => {
                                     </div>
                                     <div>
                                         <p className="font-semibold">ZMW {payout.amount.toFixed(2)}</p>
-                                        <p className="text-xs text-muted-foreground">{payout.date} via {payout.method}</p>
+                                        <p className="text-xs text-muted-foreground">{new Date(payout.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })} via {payout.method}</p>
                                     </div>
                                 </div>
                                <Badge
