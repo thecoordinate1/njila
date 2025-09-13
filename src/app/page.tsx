@@ -15,6 +15,9 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { LayoutDashboard } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { useRouter } from 'next/navigation';
+
 
 type OrderType = 'express' | 'mid' | 'wait_for';
 
@@ -62,6 +65,16 @@ const formatOrderType = (orderType: OrderType) => {
 };
 
 const HomePageContent: NextPage = () => {
+  const router = useRouter();
+
+  const handleRowClick = (order: ActiveOrder) => {
+    if (Array.isArray(order.location)) {
+      console.log(`Navigating to details for order ${order.id}`);
+      // In a real app, you would navigate to a details page:
+      // router.push(`/orders/${order.id}`);
+    }
+  };
+
   return (
     <div className="flex flex-col h-screen overflow-hidden">
       <header className="sticky top-0 z-30 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -91,7 +104,13 @@ const HomePageContent: NextPage = () => {
               </TableHeader>
               <TableBody>
                 {mockOrders.map((order) => (
-                  <TableRow key={order.id}>
+                  <TableRow 
+                    key={order.id}
+                    onClick={() => handleRowClick(order)}
+                    className={cn(
+                      Array.isArray(order.location) && "cursor-pointer"
+                    )}
+                  >
                     <TableCell className="font-medium">
                       <div>{order.content}</div>
                       {(order.type === 'mid' || order.type === 'wait_for') && order.ordersSoFar !== undefined && order.ordersTarget !== undefined && (
@@ -111,11 +130,7 @@ const HomePageContent: NextPage = () => {
                     <TableCell>{order.amount.toFixed(2)}</TableCell>
                     <TableCell>
                       {Array.isArray(order.location) ? (
-                        <ol className="list-decimal list-inside text-sm">
-                          {order.location.map((loc, index) => (
-                            <li key={index}>{loc}</li>
-                          ))}
-                        </ol>
+                        <span className="font-semibold text-primary">Multiple</span>
                       ) : (
                         order.location
                       )}
