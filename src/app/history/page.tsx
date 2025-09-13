@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'next/navigation';
+import { useState } from 'react';
 import type { NextPage } from 'next';
 import BottomNavbar from '@/components/BottomNavbar';
 import {
