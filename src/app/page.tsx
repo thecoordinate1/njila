@@ -20,6 +20,7 @@ import { useRouter } from 'next/navigation';
 
 
 type OrderType = 'express' | 'mid' | 'wait_for';
+type OrderStatus = 'Confirmed' | 'Picking Up' | 'Delivering';
 
 interface ActiveOrder {
   id: string;
@@ -27,19 +28,20 @@ interface ActiveOrder {
   amount: number;
   location: string | string[];
   type: OrderType;
+  status: OrderStatus;
   ordersSoFar?: number;
   ordersTarget?: number;
 }
 
 const mockOrders: ActiveOrder[] = [
-  { id: 'ORD-001', content: 'Legal Documents', amount: 150.00, location: 'Arcades Mall', type: 'express' },
-  { id: 'ORD-002', content: 'Catering Supplies', amount: 450.50, location: ['East Park Mall', 'Acacia Park', 'UNILUS'], type: 'mid', ordersSoFar: 3, ordersTarget: 5 },
-  { id: 'ORD-003', content: 'Electronics Parts', amount: 85.75, location: ['Manda Hill', 'Great East Road', 'PHi'], type: 'wait_for', ordersSoFar: 1, ordersTarget: 10 },
-  { id: 'ORD-004', content: 'Flower Bouquet', amount: 220.00, location: 'Levy Junction', type: 'express' },
-  { id: 'ORD-005', content: 'Clothing Parcel', amount: 110.25, location: ['Cosmopolitan Mall', 'Kamwala Market'], type: 'mid', ordersSoFar: 8, ordersTarget: 8 },
+  { id: 'ORD-001', content: 'Legal Documents', amount: 150.00, location: 'Arcades Mall', type: 'express', status: 'Picking Up' },
+  { id: 'ORD-002', content: 'Catering Supplies', amount: 450.50, location: ['East Park Mall', 'Acacia Park', 'UNILUS'], type: 'mid', ordersSoFar: 3, ordersTarget: 5, status: 'Delivering' },
+  { id: 'ORD-003', content: 'Electronics Parts', amount: 85.75, location: ['Manda Hill', 'Great East Road', 'PHi'], type: 'wait_for', ordersSoFar: 1, ordersTarget: 10, status: 'Confirmed' },
+  { id: 'ORD-004', content: 'Flower Bouquet', amount: 220.00, location: 'Levy Junction', type: 'express', status: 'Confirmed' },
+  { id: 'ORD-005', content: 'Clothing Parcel', amount: 110.25, location: ['Cosmopolitan Mall', 'Kamwala Market'], type: 'mid', ordersSoFar: 8, ordersTarget: 8, status: 'Delivering' },
 ];
 
-const getBadgeVariant = (orderType: OrderType) => {
+const getTypeBadgeVariant = (orderType: OrderType) => {
   switch (orderType) {
     case 'express':
       return 'destructive';
@@ -48,6 +50,18 @@ const getBadgeVariant = (orderType: OrderType) => {
     case 'wait_for':
     default:
       return 'outline';
+  }
+};
+
+const getStatusBadgeVariant = (status: OrderStatus) => {
+  switch (status) {
+    case 'Delivering':
+      return 'default'; // default is primary color (teal)
+    case 'Picking Up':
+      return 'secondary'; // secondary is a lighter teal
+    case 'Confirmed':
+    default:
+      return 'outline'; // outline is a gray-ish border
   }
 };
 
@@ -100,6 +114,7 @@ const HomePageContent: NextPage = () => {
                   <TableHead>Amount (ZMW)</TableHead>
                   <TableHead>Location</TableHead>
                   <TableHead>Type</TableHead>
+                  <TableHead>Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -136,8 +151,13 @@ const HomePageContent: NextPage = () => {
                       )}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={getBadgeVariant(order.type)}>
+                      <Badge variant={getTypeBadgeVariant(order.type)}>
                         {formatOrderType(order.type)}
+                      </Badge>
+                    </TableCell>
+                     <TableCell>
+                      <Badge variant={getStatusBadgeVariant(order.status)}>
+                        {order.status}
                       </Badge>
                     </TableCell>
                   </TableRow>
