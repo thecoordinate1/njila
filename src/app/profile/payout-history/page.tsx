@@ -1,13 +1,23 @@
 
 'use client';
 
+import { useState } from 'react';
 import type { NextPage } from 'next';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Banknote, Calendar, CheckCircle, Clock, TrendingUpIcon } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { ArrowLeft, CheckCircle, Clock, TrendingUpIcon, ChevronDown, SearchIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+
+type PayoutStatus = 'Paid' | 'Pending';
 
 const payoutHistoryData = [
   { id: 'PAY-006', date: 'October 27, 2023', amount: 250.75, status: 'Pending' as const, method: 'Mobile Money' },
@@ -20,12 +30,31 @@ const payoutHistoryData = [
 
 const PayoutHistoryPage: NextPage = () => {
   const router = useRouter();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<PayoutStatus | 'All'>('All');
 
   const totalEarnings = payoutHistoryData
     .filter(p => p.status === 'Paid')
     .reduce((sum, p) => sum + p.amount, 0);
   
   const thisMonthPayouts = 5820.00; // Placeholder
+
+  const filteredPayouts = payoutHistoryData
+    .filter(payout => {
+      if (statusFilter === 'All') return true;
+      return payout.status === statusFilter;
+    })
+    .filter(payout => {
+      const query = searchQuery.toLowerCase();
+      return (
+        payout.id.toLowerCase().includes(query) ||
+        payout.date.toLowerCase().includes(query) ||
+        payout.amount.toString().includes(query) ||
+        payout.method.toLowerCase().includes(query)
+      );
+    });
+
+  const filterOptions: (PayoutStatus | 'All')[] = ['All', 'Paid', 'Pending'];
 
   return (
     <div className="relative min-h-screen flex flex-col bg-muted/30">
@@ -63,35 +92,68 @@ const PayoutHistoryPage: NextPage = () => {
                 <CardDescription>A complete record of your payouts.</CardDescription>
             </CardHeader>
             <CardContent>
+                 <div className="flex justify-between items-center mb-6 gap-4">
+                    <div className="relative flex-grow">
+                        <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                        <Input
+                            type="search"
+                            placeholder="Search transactions..."
+                            className="pl-10"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                    </div>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline" className="w-48 justify-between shrink-0">
+                                Filter: {statusFilter}
+                                <ChevronDown className="h-4 w-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="w-48">
+                            {filterOptions.map((option) => (
+                                <DropdownMenuItem key={option} onSelect={() => setStatusFilter(option)}>
+                                    {option}
+                                </DropdownMenuItem>
+                            ))}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                 </div>
                  <div className="space-y-4">
-                    {payoutHistoryData.map(payout => (
-                        <div key={payout.id} className="flex justify-between items-center p-4 bg-background rounded-lg">
-                            <div className="flex items-center">
-                                <div className={cn(
-                                    "mr-4 flex h-10 w-10 items-center justify-center rounded-full",
-                                    payout.status === 'Paid' ? 'bg-green-100' : 'bg-amber-100'
-                                )}>
-                                    {payout.status === 'Paid' ? 
-                                        <CheckCircle className="h-6 w-6 text-green-600" /> : 
-                                        <Clock className="h-6 w-6 text-amber-600" />
-                                    }
+                    {filteredPayouts.length > 0 ? (
+                        filteredPayouts.map(payout => (
+                            <div key={payout.id} className="flex justify-between items-center p-4 bg-background rounded-lg">
+                                <div className="flex items-center">
+                                    <div className={cn(
+                                        "mr-4 flex h-10 w-10 items-center justify-center rounded-full",
+                                        payout.status === 'Paid' ? 'bg-green-100' : 'bg-amber-100'
+                                    )}>
+                                        {payout.status === 'Paid' ? 
+                                            <CheckCircle className="h-6 w-6 text-green-600" /> : 
+                                            <Clock className="h-6 w-6 text-amber-600" />
+                                        }
+                                    </div>
+                                    <div>
+                                        <p className="font-semibold">ZMW {payout.amount.toFixed(2)}</p>
+                                        <p className="text-xs text-muted-foreground">{payout.date} via {payout.method}</p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <p className="font-semibold">ZMW {payout.amount.toFixed(2)}</p>
-                                    <p className="text-xs text-muted-foreground">{payout.date} via {payout.method}</p>
-                                </div>
+                               <Badge
+                                    variant={payout.status === 'Paid' ? 'secondary' : 'outline'}
+                                    className={cn(
+                                        payout.status === 'Paid' && 'bg-green-100 text-green-800 border-green-200',
+                                        payout.status === 'Pending' && 'bg-amber-100 text-amber-800 border-amber-200'
+                                    )}
+                                >
+                                    {payout.status}
+                                </Badge>
                             </div>
-                           <Badge
-                                variant={payout.status === 'Paid' ? 'secondary' : 'outline'}
-                                className={cn(
-                                    payout.status === 'Paid' && 'bg-green-100 text-green-800 border-green-200',
-                                    payout.status === 'Pending' && 'bg-amber-100 text-amber-800 border-amber-200'
-                                )}
-                            >
-                                {payout.status}
-                            </Badge>
+                        ))
+                    ) : (
+                        <div className="text-center py-10">
+                            <p className="text-muted-foreground">No transactions match your criteria.</p>
                         </div>
-                    ))}
+                    )}
                  </div>
             </CardContent>
         </Card>
