@@ -28,9 +28,9 @@ const driversData = {
 };
 
 const recentHistory = [
-    { id: 'LSK-HIST-001', destination: 'Taj Pamodzi Hotel', payout: 185.25, date: 'Yesterday' },
-    { id: 'LSK-HIST-003', destination: 'Manda Hill Mall', payout: 75.50, date: '2 days ago' },
-    { id: 'LSK-HIST-004', destination: 'University of Zambia', payout: 120.00, date: '2 days ago' },
+    { id: 'LSK-HIST-001', destination: 'Taj Pamodzi Hotel', payout: 185.25, date: 'Yesterday', status: 'Completed' as const },
+    { id: 'LSK-HIST-003', destination: 'Manda Hill Mall', payout: 75.50, date: '2 days ago', status: 'Completed' as const },
+    { id: 'LSK-HIST-004', destination: 'University of Zambia', payout: 120.00, date: '2 days ago', status: 'Cancelled' as const },
 ]
 
 
@@ -148,9 +148,17 @@ const DriverDetailsPage: NextPage<DriverDetailsPageProps> = ({ params }) => {
                         <div key={order.id} className="flex justify-between items-center p-3 bg-background rounded-lg">
                             <div>
                                 <p className="font-semibold">{order.destination}</p>
-                                <p className="text-xs text-muted-foreground">Payout: ZMW {order.payout.toFixed(2)}</p>
+                                <p className="text-xs text-muted-foreground">Payout: ZMW {order.payout.toFixed(2)} | {order.date}</p>
                             </div>
-                            <p className="text-sm text-muted-foreground">{order.date}</p>
+                            <Badge
+                                variant={order.status === 'Completed' ? 'secondary' : 'destructive'}
+                                className={cn(
+                                    order.status === 'Completed' && 'bg-green-100 text-green-800 border-green-200',
+                                    order.status === 'Cancelled' && 'bg-red-100 text-red-800 border-red-200'
+                                )}
+                            >
+                                {order.status}
+                            </Badge>
                         </div>
                     ))}
                 </div>
