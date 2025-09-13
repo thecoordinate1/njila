@@ -12,7 +12,8 @@ import {
 } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Truck } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Truck, Phone } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 
@@ -22,15 +23,16 @@ interface Driver {
   avatarUrl: string;
   status: 'Available' | 'Making delivery';
   currentOrderId?: string;
+  phone: string;
 }
 
 const driversData: Driver[] = [
-  { id: 'DRV-001', name: 'John Tembo', avatarUrl: 'https://placehold.co/100x100/E0F8F8/006666?text=JT', status: 'Available' },
-  { id: 'DRV-002', name: 'Maria Phiri', avatarUrl: 'https://placehold.co/100x100/E0F8F8/006666?text=MP', status: 'Making delivery', currentOrderId: 'ORD-002' },
-  { id: 'DRV-003', name: 'David Banda', avatarUrl: 'https://placehold.co/100x100/E0F8F8/006666?text=DB', status: 'Making delivery', currentOrderId: 'ORD-005' },
-  { id: 'DRV-004', name: 'Grace Zulu', avatarUrl: 'https://placehold.co/100x100/E0F8F8/006666?text=GZ', status: 'Available' },
-  { id: 'DRV-005', name: 'Peter Mwale', avatarUrl: 'https://placehold.co/100x100/E0F8F8/006666?text=PM', status: 'Available' },
-  { id: 'DRV-006', name: 'Charity Sakala', avatarUrl: 'https://placehold.co/100x100/E0F8F8/006666?text=CS', status: 'Making delivery', currentOrderId: 'ORD-001' },
+  { id: 'DRV-001', name: 'John Tembo', avatarUrl: 'https://placehold.co/100x100/E0F8F8/006666?text=JT', status: 'Available', phone: '+260977123456' },
+  { id: 'DRV-002', name: 'Maria Phiri', avatarUrl: 'https://placehold.co/100x100/E0F8F8/006666?text=MP', status: 'Making delivery', currentOrderId: 'ORD-002', phone: '+260977234567' },
+  { id: 'DRV-003', name: 'David Banda', avatarUrl: 'https://placehold.co/100x100/E0F8F8/006666?text=DB', status: 'Making delivery', currentOrderId: 'ORD-005', phone: '+260977345678' },
+  { id: 'DRV-004', name: 'Grace Zulu', avatarUrl: 'https://placehold.co/100x100/E0F8F8/006666?text=GZ', status: 'Available', phone: '+260977456789' },
+  { id: 'DRV-005', name: 'Peter Mwale', avatarUrl: 'https://placehold.co/100x100/E0F8F8/006666?text=PM', status: 'Available', phone: '+260977567890' },
+  { id: 'DRV-006', name: 'Charity Sakala', avatarUrl: 'https://placehold.co/100x100/E0F8F8/006666?text=CS', status: 'Making delivery', currentOrderId: 'ORD-001', phone: '+260977678901' },
 ];
 
 
@@ -74,15 +76,23 @@ const DriversPage: NextPage = () => {
                         )}
                       </div>
                     </div>
-                    <Badge
-                      className={cn(
-                        driver.status === 'Available' && 'bg-green-100 text-green-800 border-green-200',
-                        driver.status === 'Making delivery' && 'bg-amber-100 text-amber-800 border-amber-200'
-                      )}
-                      variant="outline"
-                    >
-                      {driver.status}
-                    </Badge>
+                    <div className="flex items-center space-x-2">
+                      <Badge
+                        className={cn(
+                          driver.status === 'Available' && 'bg-green-100 text-green-800 border-green-200',
+                          driver.status === 'Making delivery' && 'bg-amber-100 text-amber-800 border-amber-200'
+                        )}
+                        variant="outline"
+                      >
+                        {driver.status}
+                      </Badge>
+                       <Button asChild variant="ghost" size="icon" className="rounded-full h-9 w-9">
+                          <a href={`tel:${driver.phone}`}>
+                            <Phone className="h-4 w-4 text-primary" />
+                            <span className="sr-only">Call {driver.name}</span>
+                          </a>
+                        </Button>
+                    </div>
                   </div>
                 ))}
               </div>
