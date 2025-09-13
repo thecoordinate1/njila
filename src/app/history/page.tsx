@@ -12,7 +12,13 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { HistoryIcon } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { HistoryIcon, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { LatLngExpression } from 'leaflet';
 
@@ -37,7 +43,6 @@ const orderHistoryData: OrderHistory[] = [
   { id: 'LSK-HIST-007', pickup: 'Civic Centre, Independence Ave', destination: 'National Assembly of Zambia', payout: 55.25, dateCompleted: '2023-10-19', status: 'Completed', pickupCoords: [-15.4170, 28.2810], destinationCoords: [-15.4000, 28.3050] },
 ];
 
-
 const HistoryPage: NextPage = () => {
   const [filter, setFilter] = useState<'All' | 'Completed' | 'Cancelled'>('All');
 
@@ -45,6 +50,8 @@ const HistoryPage: NextPage = () => {
     if (filter === 'All') return true;
     return order.status === filter;
   });
+
+  const filterOptions: ('All' | 'Completed' | 'Cancelled')[] = ['All', 'Completed', 'Cancelled'];
 
   return (
     <div className="relative min-h-screen flex flex-col bg-muted/30">
@@ -55,10 +62,22 @@ const HistoryPage: NextPage = () => {
       </header>
       <main className="flex-grow flex flex-col items-center p-4 md:p-6 pb-32">
          <div className="w-full max-w-2xl">
-            <div className="flex justify-center space-x-2 mb-6 bg-muted p-2 rounded-lg">
-                <Button variant={filter === 'All' ? 'default' : 'ghost'} className="flex-1" onClick={() => setFilter('All')}>All</Button>
-                <Button variant={filter === 'Completed' ? 'default' : 'ghost'} className="flex-1" onClick={() => setFilter('Completed')}>Completed</Button>
-                <Button variant={filter === 'Cancelled' ? 'default' : 'ghost'} className="flex-1" onClick={() => setFilter('Cancelled')}>Cancelled</Button>
+            <div className="flex justify-end mb-6">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="w-48 justify-between">
+                      Filter by: {filter}
+                      <ChevronDown className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-48">
+                    {filterOptions.map((option) => (
+                      <DropdownMenuItem key={option} onSelect={() => setFilter(option)}>
+                        {option}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
             </div>
             <div className="space-y-6">
               {filteredOrders.length > 0 ? (
