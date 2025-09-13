@@ -13,12 +13,15 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { ArrowLeft, CheckCircle, Clock, TrendingUpIcon, ChevronDown, SearchIcon } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Clock, TrendingUpIcon, ChevronDown, SearchIcon, Calendar as CalendarIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Calendar } from "@/components/ui/calendar"
+import { format, subDays } from "date-fns"
+import type { DateRange } from "react-day-picker"
 
 type PayoutStatus = 'Paid' | 'Pending';
-type TimeFilter = 'All Time' | 'Last 30 Days' | 'This Month';
 
 const payoutHistoryData = [
   { id: 'PAY-007', date: new Date().toISOString(), amount: 125.50, status: 'Pending' as const, method: 'Mobile Money' },
@@ -34,11 +37,12 @@ const PayoutHistoryPage: NextPage = () => {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<PayoutStatus | 'All'>('All');
-  const [timeFilter, setTimeFilter] = useState<TimeFilter>('All Time');
-
-  const now = new Date();
-  const thirtyDaysAgo = new Date(new Date().setDate(now.getDate() - 30));
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const [date, setDate] = useState<DateRange | undefined>({
+    from: subDays(new Date(), 30),
+    to: new Date(),
+  });
+  
+  const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
 
   const filteredPayouts = payoutHistoryData
     .filter(payout => {
@@ -46,10 +50,17 @@ const PayoutHistoryPage: NextPage = () => {
       return payout.status === statusFilter;
     })
     .filter(payout => {
-        if (timeFilter === 'All Time') return true;
+        if (!date) return true;
         const payoutDate = new Date(payout.date);
-        if (timeFilter === 'Last 30 Days') return payoutDate >= thirtyDaysAgo;
-        if (timeFilter === 'This Month') return payoutDate >= startOfMonth;
+        if (date.from && date.to) {
+            return payoutDate >= date.from && payoutDate <= date.to;
+        }
+        if (date.from) {
+            return payoutDate >= date.from;
+        }
+        if (date.to) {
+            return payoutDate <= date.to;
+        }
         return true;
     })
     .filter(payout => {
@@ -80,7 +91,6 @@ const PayoutHistoryPage: NextPage = () => {
     .reduce((sum, p) => sum + p.amount, 0);
 
   const statusFilterOptions: (PayoutStatus | 'All')[] = ['All', 'Paid', 'Pending'];
-  const timeFilterOptions: TimeFilter[] = ['All Time', 'Last 30 Days', 'This Month'];
 
   return (
     <div className="relative min-h-screen flex flex-col bg-muted/30">
@@ -149,21 +159,42 @@ const PayoutHistoryPage: NextPage = () => {
                                 ))}
                             </DropdownMenuContent>
                         </DropdownMenu>
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="outline" className="w-full justify-between">
-                                    Date: {timeFilter}
-                                    <ChevronDown className="h-4 w-4" />
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent className="w-48">
-                                {timeFilterOptions.map((option) => (
-                                    <DropdownMenuItem key={option} onSelect={() => setTimeFilter(option)}>
-                                        {option}
-                                    </DropdownMenuItem>
-                                ))}
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                              <Button
+                                id="date"
+                                variant={"outline"}
+                                className={cn(
+                                  "w-full justify-start text-left font-normal",
+                                  !date && "text-muted-foreground"
+                                )}
+                              >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {date?.from ? (
+                                  date.to ? (
+                                    <>
+                                      {format(date.from, "LLL dd, y")} -{" "}
+                                      {format(date.to, "LLL dd, y")}
+                                    </>
+                                  ) : (
+                                    format(date.from, "LLL dd, y")
+                                  )
+                                ) : (
+                                  <span>Pick a date</span>
+                                )}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="end">
+                              <Calendar
+                                initialFocus
+                                mode="range"
+                                defaultMonth={date?.from}
+                                selected={date}
+                                onSelect={setDate}
+                                numberOfMonths={2}
+                              />
+                            </PopoverContent>
+                          </Popover>
                     </div>
                  </div>
                  <div className="space-y-4">
@@ -210,3 +241,5 @@ const PayoutHistoryPage: NextPage = () => {
 };
 
 export default PayoutHistoryPage;
+
+    
