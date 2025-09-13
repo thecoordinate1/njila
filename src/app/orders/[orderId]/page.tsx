@@ -5,15 +5,18 @@ import type { NextPage } from 'next';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Package, User, MapPin, CircleCheck, CircleDashed, MoreVertical } from 'lucide-react';
+import { ArrowLeft, User, MapPin, CircleCheck, CircleDashed } from 'lucide-react';
 import type { DeliveryBatch } from '@/types/delivery';
 import { cn } from '@/lib/utils';
+import CountdownTimer from '@/components/CountdownTimer';
 
 interface OrderDetailsPageProps {
   params: {
     orderId: string;
   };
 }
+
+const tenMinutesFromNow = new Date().getTime() + 10 * 60 * 1000;
 
 // Mock data for a multi-stop delivery batch
 const mockBatchData: { [key: string]: DeliveryBatch } = {
@@ -27,7 +30,8 @@ const mockBatchData: { [key: string]: DeliveryBatch } = {
       { id: 'stop-4', type: 'dropoff', address: 'University of Lusaka (UNILUS)', shortAddress: 'UNILUS', coordinates: [-15.39, 28.36], status: 'pending', sequence: 4, customerName: 'UNILUS Student Affairs' },
     ],
     estimatedTotalTime: '1 hr 15 mins',
-    estimatedTotalDistance: '18 km'
+    estimatedTotalDistance: '18 km',
+    expiryTimestamp: tenMinutesFromNow,
   },
   'ORD-003': {
     id: 'ORD-003',
@@ -36,6 +40,7 @@ const mockBatchData: { [key: string]: DeliveryBatch } = {
       { id: 'stop-1', type: 'pickup', address: 'Katondo Street, Lusaka', shortAddress: 'Katondo St', coordinates: [-15.42, 28.28], status: 'delivered', sequence: 1, customerName: 'ZED Electronics Hub' },
       { id: 'stop-2', type: 'dropoff', address: 'Manda Hill Shopping Mall', shortAddress: 'Manda Hill', coordinates: [-15.40, 28.31], status: 'pending', sequence: 2, customerName: 'Gadget Repair Shop' },
     ],
+    expiryTimestamp: tenMinutesFromNow,
   },
   'ORD-005': {
     id: 'ORD-005',
@@ -44,6 +49,7 @@ const mockBatchData: { [key: string]: DeliveryBatch } = {
       { id: 'stop-1', type: 'pickup', address: 'Kamwala Market, Lusaka', shortAddress: 'Kamwala Market', coordinates: [-15.43, 28.29], status: 'delivered', sequence: 1, customerName: 'Local Fabrics Ltd.' },
       { id: 'stop-2', type: 'dropoff', address: 'Cosmopolitan Mall, Kafue Rd', shortAddress: 'Cosmopolitan Mall', coordinates: [-15.45, 28.27], status: 'pending', sequence: 2, customerName: 'Boutique Z' },
     ],
+    expiryTimestamp: tenMinutesFromNow,
   }
 };
 
@@ -74,10 +80,15 @@ const OrderDetailsPage: NextPage<OrderDetailsPageProps> = ({ params }) => {
       <main className="flex-grow flex flex-col items-center p-4 md:p-6 pb-20">
         <Card className="w-full max-w-2xl shadow-md">
           <CardHeader>
-            <CardTitle>Order #{orderId}</CardTitle>
-            <CardDescription>
-              {orderData?.label || 'Details for this batched delivery.'}
-            </CardDescription>
+            <div className="flex justify-between items-start">
+              <div>
+                <CardTitle>Order #{orderId}</CardTitle>
+                <CardDescription className="pt-1">
+                  {orderData?.label || 'Details for this batched delivery.'}
+                </CardDescription>
+              </div>
+              {orderData?.expiryTimestamp && <CountdownTimer expiryTimestamp={orderData.expiryTimestamp} />}
+            </div>
           </CardHeader>
           <CardContent>
             {orderData ? (

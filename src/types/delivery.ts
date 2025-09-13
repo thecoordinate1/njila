@@ -18,6 +18,7 @@ export interface DeliveryBatch {
   stops: OrderStop[];
   estimatedTotalTime?: string;
   estimatedTotalDistance?: string;
+  expiryTimestamp?: number;
 }
 
 // Example usage of LatLngExpression for Leaflet
