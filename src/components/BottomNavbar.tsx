@@ -2,7 +2,7 @@
 'use client';
 
 import type React from 'react';
-import { LayoutDashboard, HistoryIcon, UserIcon } from 'lucide-react';
+import { LayoutDashboard, HistoryIcon, UserIcon, Truck } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -12,6 +12,7 @@ const BottomNavbar: React.FC = () => {
 
   const navItems = [
     { href: '/', icon: LayoutDashboard, label: 'Dashboard' },
+    { href: '/drivers', icon: Truck, label: 'Drivers' },
     { href: '/history', icon: HistoryIcon, label: 'History' },
     { href: '/profile', icon: UserIcon, label: 'Profile' },
   ];
