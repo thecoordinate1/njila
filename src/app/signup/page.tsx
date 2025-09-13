@@ -68,9 +68,9 @@ export default function SignupPage() {
         <CardHeader className="text-center">
           <div className="flex justify-center items-center mb-4">
               <Truck className="h-8 w-8 text-primary" />
-              <h1 className="text-3xl font-bold ml-2">Njila</h1>
+              <h1 className="text-3xl font-bold ml-2">Ngila</h1>
           </div>
-          <CardTitle className="text-2xl">Create a Driver Account</CardTitle>
+          <CardTitle className="text-2xl">Create a Manager Account</CardTitle>
           <CardDescription>Enter your details below to get started.</CardDescription>
         </CardHeader>
         <CardContent>
@@ -91,7 +91,7 @@ export default function SignupPage() {
               <Input
                 id="email"
                 type="email"
-                placeholder="driver@example.com"
+                placeholder="manager@example.com"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
