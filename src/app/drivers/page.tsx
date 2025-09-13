@@ -57,43 +57,45 @@ const DriversPage: NextPage = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
+              <div className="space-y-2">
                 {driversData.map((driver) => (
-                  <div key={driver.id} className="flex items-center justify-between p-3 rounded-lg bg-background hover:bg-muted/50 transition-colors">
-                    <div className="flex items-center">
-                      <Avatar className="h-12 w-12 mr-4">
-                        <AvatarImage src={driver.avatarUrl} alt={driver.name} data-ai-hint="driver avatar" />
-                        <AvatarFallback>{driver.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-semibold text-foreground">{driver.name}</p>
-                        {driver.status === 'Making delivery' && driver.currentOrderId ? (
-                           <Link href={`/orders/${driver.currentOrderId}`} className="text-xs text-primary hover:underline">
-                            View Order #{driver.currentOrderId}
-                          </Link>
-                        ) : (
-                          <p className="text-xs text-muted-foreground">Ready for new orders</p>
-                        )}
+                   <Link key={driver.id} href={`/drivers/${driver.id}`} className="block rounded-lg transition-colors hover:bg-muted/50">
+                    <div className="flex items-center justify-between p-3">
+                      <div className="flex items-center">
+                        <Avatar className="h-12 w-12 mr-4">
+                          <AvatarImage src={driver.avatarUrl} alt={driver.name} data-ai-hint="driver avatar" />
+                          <AvatarFallback>{driver.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-semibold text-foreground">{driver.name}</p>
+                          {driver.status === 'Making delivery' && driver.currentOrderId ? (
+                             <span className="text-xs text-primary">
+                              View Order #{driver.currentOrderId}
+                            </span>
+                          ) : (
+                            <p className="text-xs text-muted-foreground">Ready for new orders</p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Badge
+                          className={cn(
+                            driver.status === 'Available' && 'bg-green-100 text-green-800 border-green-200',
+                            driver.status === 'Making delivery' && 'bg-amber-100 text-amber-800 border-amber-200'
+                          )}
+                          variant="outline"
+                        >
+                          {driver.status}
+                        </Badge>
+                         <Button asChild variant="ghost" size="icon" className="rounded-full h-9 w-9" onClick={(e) => e.stopPropagation()}>
+                            <a href={`tel:${driver.phone}`}>
+                              <Phone className="h-4 w-4 text-primary" />
+                              <span className="sr-only">Call {driver.name}</span>
+                            </a>
+                          </Button>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <Badge
-                        className={cn(
-                          driver.status === 'Available' && 'bg-green-100 text-green-800 border-green-200',
-                          driver.status === 'Making delivery' && 'bg-amber-100 text-amber-800 border-amber-200'
-                        )}
-                        variant="outline"
-                      >
-                        {driver.status}
-                      </Badge>
-                       <Button asChild variant="ghost" size="icon" className="rounded-full h-9 w-9">
-                          <a href={`tel:${driver.phone}`}>
-                            <Phone className="h-4 w-4 text-primary" />
-                            <span className="sr-only">Call {driver.name}</span>
-                          </a>
-                        </Button>
-                    </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             </CardContent>
