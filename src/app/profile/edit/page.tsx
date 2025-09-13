@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ArrowLeft, SaveIcon, RefreshCwIcon, UserCircle2, Truck, ShieldAlertIcon } from 'lucide-react';
+import BottomNavbar from '@/components/BottomNavbar';
 
 interface ProfileFormData {
   full_name: string;
@@ -187,7 +188,7 @@ const EditProfilePage = () => {
                 
                 {error && <p className="text-sm text-center text-red-500">{error}</p>}
                 
-                <div className="sticky bottom-4 z-10 mt-6">
+                <div className="sticky bottom-20 z-10 mt-6 md:relative md:bottom-auto">
                    <Button type="submit" size="lg" className="w-full" disabled={saving}>
                        {saving ? <RefreshCwIcon className="mr-2 h-5 w-5 animate-spin" /> : <SaveIcon className="mr-2 h-5 w-5" />}
                        {saving ? 'Saving...' : 'Save Changes'}
@@ -195,6 +196,7 @@ const EditProfilePage = () => {
                 </div>
             </form>
         </main>
+        <BottomNavbar />
     </div>
   );
 };

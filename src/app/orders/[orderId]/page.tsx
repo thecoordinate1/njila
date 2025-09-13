@@ -9,6 +9,7 @@ import { ArrowLeft, User, MapPin, CircleCheck, CircleDashed } from 'lucide-react
 import type { DeliveryBatch } from '@/types/delivery';
 import { cn } from '@/lib/utils';
 import CountdownTimer from '@/components/CountdownTimer';
+import BottomNavbar from '@/components/BottomNavbar';
 
 interface OrderDetailsPageProps {
   params: {
@@ -128,6 +129,7 @@ const OrderDetailsPage: NextPage<OrderDetailsPageProps> = ({ params }) => {
           </CardContent>
         </Card>
       </main>
+      <BottomNavbar />
     </div>
   );
 };

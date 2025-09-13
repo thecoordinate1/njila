@@ -20,6 +20,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar"
 import { format, subDays } from "date-fns"
 import type { DateRange } from "react-day-picker"
+import BottomNavbar from '@/components/BottomNavbar';
 
 type PayoutStatus = 'Paid' | 'Pending';
 
@@ -236,10 +237,9 @@ const PayoutHistoryPage: NextPage = () => {
             </CardContent>
         </Card>
       </main>
+      <BottomNavbar />
     </div>
   );
 };
 
 export default PayoutHistoryPage;
-
-    

@@ -11,6 +11,7 @@ import { ArrowLeft, Phone, Truck, History, Star, TrendingUp, Link as LinkIcon, C
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
+import BottomNavbar from '@/components/BottomNavbar';
 
 interface DriverDetailsPageProps {
   params: {
@@ -210,6 +211,7 @@ const DriverDetailsPage: NextPage<DriverDetailsPageProps> = ({ params }) => {
         </Card>
 
       </main>
+      <BottomNavbar />
     </div>
   );
 };
