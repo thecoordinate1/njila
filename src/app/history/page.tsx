@@ -12,13 +12,14 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { HistoryIcon, ChevronDown } from 'lucide-react';
+import { HistoryIcon, ChevronDown, SearchIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { LatLngExpression } from 'leaflet';
 
@@ -45,11 +46,21 @@ const orderHistoryData: OrderHistory[] = [
 
 const HistoryPage: NextPage = () => {
   const [filter, setFilter] = useState<'All' | 'Completed' | 'Cancelled'>('All');
+  const [searchQuery, setSearchQuery] = useState('');
 
-  const filteredOrders = orderHistoryData.filter(order => {
-    if (filter === 'All') return true;
-    return order.status === filter;
-  });
+  const filteredOrders = orderHistoryData
+    .filter(order => {
+      if (filter === 'All') return true;
+      return order.status === filter;
+    })
+    .filter(order => {
+      const query = searchQuery.toLowerCase();
+      return (
+        order.id.toLowerCase().includes(query) ||
+        order.pickup.toLowerCase().includes(query) ||
+        order.destination.toLowerCase().includes(query)
+      );
+    });
 
   const filterOptions: ('All' | 'Completed' | 'Cancelled')[] = ['All', 'Completed', 'Cancelled'];
 
@@ -62,10 +73,20 @@ const HistoryPage: NextPage = () => {
       </header>
       <main className="flex-grow flex flex-col items-center p-4 md:p-6 pb-32">
          <div className="w-full max-w-2xl">
-            <div className="flex justify-end mb-6">
+            <div className="flex justify-between items-center mb-6 gap-4">
+               <div className="relative flex-grow">
+                  <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  <Input
+                    type="search"
+                    placeholder="Search by ID, pickup, or destination..."
+                    className="pl-10"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+               </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="w-48 justify-between">
+                    <Button variant="outline" className="w-48 justify-between shrink-0">
                       Filter by: {filter}
                       <ChevronDown className="h-4 w-4" />
                     </Button>
@@ -114,8 +135,8 @@ const HistoryPage: NextPage = () => {
               ) : (
                 <div className="text-center py-16 rounded-lg bg-card shadow-sm">
                   <HistoryIcon className="mx-auto h-16 w-16 text-muted-foreground/70 mb-5" />
-                  <h3 className="text-2xl font-semibold mb-2 text-foreground/90">No {filter} Orders</h3>
-                  <p className="text-sm text-muted-foreground px-4">There are no orders with this status in your history.</p>
+                  <h3 className="text-2xl font-semibold mb-2 text-foreground/90">No Matching Orders</h3>
+                  <p className="text-sm text-muted-foreground px-4">Your search and filter combination did not return any results. Try adjusting your criteria.</p>
                 </div>
               )}
             </div>
