@@ -30,6 +30,9 @@ const orderHistoryData: OrderHistory[] = [
   { id: 'LSK-HIST-002', pickup: 'Intercity Bus Terminus, Dedan Kimathi Rd', destination: 'Crossroads Shopping Mall', payout: 95.00, dateCompleted: '2023-10-24', status: 'Cancelled', pickupCoords: [-15.4280, 28.2800], destinationCoords: [-15.3850, 28.3350] },
   { id: 'LSK-HIST-003', pickup: 'East Park Mall, Great East Road', destination: 'Manda Hill Shopping Mall', payout: 75.50, dateCompleted: '2023-10-23', status: 'Completed', pickupCoords: [-15.39, 28.34], destinationCoords: [-15.40, 28.31] },
   { id: 'LSK-HIST-004', pickup: 'Kamwala Market, Lusaka', destination: 'University of Zambia (UNZA)', payout: 120.00, dateCompleted: '2023-10-22', status: 'Completed', pickupCoords: [-15.43, 28.29], destinationCoords: [-15.39, 28.33] },
+  { id: 'LSK-HIST-005', pickup: 'Levy Junction Mall', destination: 'Arcades Shopping Mall', payout: 65.00, dateCompleted: '2023-10-21', status: 'Completed', pickupCoords: [-15.4090, 28.3100], destinationCoords: [-15.3950, 28.3300] },
+  { id: 'LSK-HIST-006', pickup: 'Soweto Market, Lumumba Rd', destination: 'Bauleni Market', payout: 115.75, dateCompleted: '2023-10-20', status: 'Cancelled', pickupCoords: [-15.4250, 28.2700], destinationCoords: [-15.4400, 28.3500] },
+  { id: 'LSK-HIST-007', pickup: 'Civic Centre, Independence Ave', destination: 'National Assembly of Zambia', payout: 55.25, dateCompleted: '2023-10-19', status: 'Completed', pickupCoords: [-15.4170, 28.2810], destinationCoords: [-15.4000, 28.3050] },
 ];
 
 
