@@ -22,6 +22,7 @@ import {
 import { ListChecksIcon, HistoryIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { LatLngExpression } from 'leaflet';
+import CountdownTimer from '@/components/CountdownTimer';
 
 interface Order {
   id: string;
@@ -33,17 +34,20 @@ interface Order {
   status?: "Completed" | "Cancelled" | "Pending";
   pickupCoords: LatLngExpression;
   destinationCoords: LatLngExpression;
+  expiryTimestamp: number;
 }
 
+const tenMinutesFromNow = new Date().getTime() + 10 * 60 * 1000;
+
 const availableOrdersData: Order[] = [
-  { id: 'LSK_ORD_1', pickup: 'Levy Junction Mall, Lusaka', destination: 'Arcades Shopping Mall, Lusaka', payout: 15.50, distance: '5.5 km', status: 'Pending', pickupCoords: [-15.4090, 28.3100], destinationCoords: [-15.3950, 28.3300] },
-  { id: 'LSK_ORD_2', pickup: 'Soweto Market, Lumumba Rd, Lusaka', destination: 'Bauleni Market, Lusaka', payout: 22.00, distance: '12 km', status: 'Pending', pickupCoords: [-15.4250, 28.2700], destinationCoords: [-15.4400, 28.3500] },
-  { id: 'LSK_ORD_3', pickup: 'Civic Centre, Independence Ave, Lusaka', destination: 'National Assembly of Zambia, Lusaka', payout: 12.75, distance: '3.8 km', status: 'Pending', pickupCoords: [-15.4170, 28.2810], destinationCoords: [-15.4000, 28.3050] },
+  { id: 'LSK_ORD_1', pickup: 'Levy Junction Mall, Lusaka', destination: 'Arcades Shopping Mall, Lusaka', payout: 15.50, distance: '5.5 km', status: 'Pending', pickupCoords: [-15.4090, 28.3100], destinationCoords: [-15.3950, 28.3300], expiryTimestamp: tenMinutesFromNow },
+  { id: 'LSK_ORD_2', pickup: 'Soweto Market, Lumumba Rd, Lusaka', destination: 'Bauleni Market, Lusaka', payout: 22.00, distance: '12 km', status: 'Pending', pickupCoords: [-15.4250, 28.2700], destinationCoords: [-15.4400, 28.3500], expiryTimestamp: tenMinutesFromNow },
+  { id: 'LSK_ORD_3', pickup: 'Civic Centre, Independence Ave, Lusaka', destination: 'National Assembly of Zambia, Lusaka', payout: 12.75, distance: '3.8 km', status: 'Pending', pickupCoords: [-15.4170, 28.2810], destinationCoords: [-15.4000, 28.3050], expiryTimestamp: tenMinutesFromNow },
 ];
 
 const orderHistoryData: Order[] = [
-  { id: 'LSK_HIST_1', pickup: 'Kenneth Kaunda International Airport (LUN), Lusaka', destination: 'Taj Pamodzi Hotel, Lusaka', payout: 18.25, dateCompleted: '2023-10-25', status: 'Completed', pickupCoords: [-15.3280, 28.4520], destinationCoords: [-15.4200, 28.2950] },
-  { id: 'LSK_HIST_2', pickup: 'Intercity Bus Terminus, Dedan Kimathi Rd, Lusaka', destination: 'Crossroads Shopping Mall, Lusaka', payout: 9.50, dateCompleted: '2023-10-24', status: 'Cancelled', pickupCoords: [-15.4280, 28.2800], destinationCoords: [-15.3850, 28.3350] },
+  { id: 'LSK_HIST_1', pickup: 'Kenneth Kaunda International Airport (LUN), Lusaka', destination: 'Taj Pamodzi Hotel, Lusaka', payout: 18.25, dateCompleted: '2023-10-25', status: 'Completed', pickupCoords: [-15.3280, 28.4520], destinationCoords: [-15.4200, 28.2950], expiryTimestamp: 0 },
+  { id: 'LSK_HIST_2', pickup: 'Intercity Bus Terminus, Dedan Kimathi Rd, Lusaka', destination: 'Crossroads Shopping Mall, Lusaka', payout: 9.50, dateCompleted: '2023-10-24', status: 'Cancelled', pickupCoords: [-15.4280, 28.2800], destinationCoords: [-15.3850, 28.3350], expiryTimestamp: 0 },
 ];
 
 const OrdersPage: NextPage = () => {
@@ -82,7 +86,7 @@ const OrdersPage: NextPage = () => {
                     <CardHeader className="pb-3 pt-5 px-5">
                       <div className="flex justify-between items-start mb-1">
                         <CardTitle className="text-xl font-semibold">Order #{order.id}</CardTitle>
-                        {order.distance && <p className="text-xs font-medium text-primary bg-primary/10 px-2.5 py-1 rounded-full">{order.distance}</p>}
+                        <CountdownTimer expiryTimestamp={order.expiryTimestamp} />
                       </div>
                       <CardDescription className="text-xs text-muted-foreground pt-1">
                         <span className="font-medium text-foreground">From:</span> {order.pickup} <br />
