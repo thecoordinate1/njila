@@ -22,7 +22,7 @@ interface ActiveOrder {
   id: string;
   content: string;
   amount: number;
-  location: string;
+  location: string | string[];
   type: OrderType;
   ordersSoFar?: number;
   ordersTarget?: number;
@@ -30,10 +30,10 @@ interface ActiveOrder {
 
 const mockOrders: ActiveOrder[] = [
   { id: 'ORD-001', content: 'Legal Documents', amount: 150.00, location: 'Arcades Mall', type: 'express' },
-  { id: 'ORD-002', content: 'Catering Supplies', amount: 450.50, location: 'East Park Mall', type: 'mid', ordersSoFar: 3, ordersTarget: 5 },
-  { id: 'ORD-003', content: 'Electronics Parts', amount: 85.75, location: 'Manda Hill', type: 'wait_for', ordersSoFar: 1, ordersTarget: 10 },
+  { id: 'ORD-002', content: 'Catering Supplies', amount: 450.50, location: ['East Park Mall', 'Acacia Park', 'UNILUS'], type: 'mid', ordersSoFar: 3, ordersTarget: 5 },
+  { id: 'ORD-003', content: 'Electronics Parts', amount: 85.75, location: ['Manda Hill', 'Great East Road', 'PHi'], type: 'wait_for', ordersSoFar: 1, ordersTarget: 10 },
   { id: 'ORD-004', content: 'Flower Bouquet', amount: 220.00, location: 'Levy Junction', type: 'express' },
-  { id: 'ORD-005', content: 'Clothing Parcel', amount: 110.25, location: 'Cosmopolitan Mall', type: 'mid', ordersSoFar: 8, ordersTarget: 8 },
+  { id: 'ORD-005', content: 'Clothing Parcel', amount: 110.25, location: ['Cosmopolitan Mall', 'Kamwala Market'], type: 'mid', ordersSoFar: 8, ordersTarget: 8 },
 ];
 
 const getBadgeVariant = (orderType: OrderType) => {
@@ -109,7 +109,17 @@ const HomePageContent: NextPage = () => {
                       )}
                     </TableCell>
                     <TableCell>{order.amount.toFixed(2)}</TableCell>
-                    <TableCell>{order.location}</TableCell>
+                    <TableCell>
+                      {Array.isArray(order.location) ? (
+                        <ol className="list-decimal list-inside text-sm">
+                          {order.location.map((loc, index) => (
+                            <li key={index}>{loc}</li>
+                          ))}
+                        </ol>
+                      ) : (
+                        order.location
+                      )}
+                    </TableCell>
                     <TableCell>
                       <Badge variant={getBadgeVariant(order.type)}>
                         {formatOrderType(order.type)}
