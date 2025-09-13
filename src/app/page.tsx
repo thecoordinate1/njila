@@ -434,31 +434,8 @@ const HomePageContent: NextPage = () => {
       </header>
 
       {isOnline && currentDelivery ? (
-        <div className="flex flex-col md:flex-row md:group" style={{ height: 'calc(100vh - 8rem)'}}>
-          <div className="bg-muted relative h-1/2 md:h-full md:w-2/3 transition-all duration-300 ease-in-out md:group-hover:w-1/2">
-            {gpsError && (
-              <div className="absolute top-2 left-2 right-2 z-10">
-                <Alert variant="destructive">
-                  <AlertTriangleIcon className="h-4 w-4" />
-                  <AlertTitle>GPS Error</AlertTitle>
-                  <AlertDescription>{gpsError}</AlertDescription>
-                </Alert>
-              </div>
-            )}
-            <DynamicMapDisplay
-              driverLocation={driverLocation}
-              stops={currentDelivery.stops}
-              currentStopId={currentStop?.id}
-              orderCoordinates={orderCoordinates}
-            />
-             {!gpsError && !driverLocation && ( 
-              <div className="absolute inset-0 flex items-center justify-center text-muted-foreground bg-muted/80 z-20">
-                <NavigationIcon className="w-8 h-8 mr-2 animate-pulse" /> Acquiring GPS signal...
-              </div>
-            )}
-          </div>
-
-          <div className="bg-background shadow-t-lg flex h-1/2 md:h-full md:w-1/3 flex-col overflow-hidden transition-all duration-300 ease-in-out md:group-hover:w-1/2">
+        <div className="flex flex-col" style={{ height: 'calc(100vh - 8rem)'}}>
+          <div className="bg-background shadow-t-lg flex flex-1 flex-col overflow-hidden">
             {showConfirmationScreen && currentStop ? (
               <Card className="m-2 flex-grow overflow-y-auto shadow-none border-none rounded-none">
                 <CardHeader className="py-3 px-4">
@@ -576,15 +553,8 @@ const HomePageContent: NextPage = () => {
           </div>
         </div>
       ) : (
-        <div className="relative flex-grow">
-          <div className="absolute inset-0 z-0">
-            <DynamicMapDisplay 
-                driverLocation={driverLocation} 
-                orderCoordinates={orderCoordinates}
-            />
-          </div>
-          <main className="absolute top-0 left-0 right-0 bottom-0 p-4 overflow-y-auto space-y-4 z-10 flex items-center justify-center">
-            <Card className="shadow-lg rounded-lg bg-card/95 backdrop-blur-sm w-full max-w-sm">
+        <main className="flex-grow p-4 overflow-y-auto space-y-4 flex items-center justify-center">
+            <Card className="shadow-lg rounded-lg bg-card w-full max-w-sm">
               <CardContent className="pt-6">
                 {isOnline ? (
                    isLoadingJob ?
@@ -608,8 +578,7 @@ const HomePageContent: NextPage = () => {
                  )}
               </CardContent>
             </Card>
-          </main>
-        </div>
+        </main>
       )}
 
       <BottomNavbar />
