@@ -23,5 +23,3 @@ export interface DeliveryBatch {
 // Example usage of LatLngExpression for Leaflet
 // import type { LatLngExpression } from 'leaflet';
 // const coords: LatLngExpression = [51.505, -0.09];
-
-    
