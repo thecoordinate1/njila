@@ -13,6 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 import { LayoutDashboard } from 'lucide-react';
 
 type OrderType = 'express' | 'mid' | 'wait_for';
@@ -23,14 +24,16 @@ interface ActiveOrder {
   amount: number;
   location: string;
   type: OrderType;
+  ordersSoFar?: number;
+  ordersTarget?: number;
 }
 
 const mockOrders: ActiveOrder[] = [
   { id: 'ORD-001', content: 'Legal Documents', amount: 150.00, location: 'Arcades Mall', type: 'express' },
-  { id: 'ORD-002', content: 'Catering Supplies', amount: 450.50, location: 'East Park Mall', type: 'mid' },
-  { id: 'ORD-003', content: 'Electronics Parts', amount: 85.75, location: 'Manda Hill', type: 'wait_for' },
+  { id: 'ORD-002', content: 'Catering Supplies', amount: 450.50, location: 'East Park Mall', type: 'mid', ordersSoFar: 3, ordersTarget: 5 },
+  { id: 'ORD-003', content: 'Electronics Parts', amount: 85.75, location: 'Manda Hill', type: 'wait_for', ordersSoFar: 1, ordersTarget: 10 },
   { id: 'ORD-004', content: 'Flower Bouquet', amount: 220.00, location: 'Levy Junction', type: 'express' },
-  { id: 'ORD-005', content: 'Clothing Parcel', amount: 110.25, location: 'Cosmopolitan Mall', type: 'mid' },
+  { id: 'ORD-005', content: 'Clothing Parcel', amount: 110.25, location: 'Cosmopolitan Mall', type: 'mid', ordersSoFar: 8, ordersTarget: 8 },
 ];
 
 const getBadgeVariant = (orderType: OrderType) => {
@@ -89,7 +92,22 @@ const HomePageContent: NextPage = () => {
               <TableBody>
                 {mockOrders.map((order) => (
                   <TableRow key={order.id}>
-                    <TableCell className="font-medium">{order.content}</TableCell>
+                    <TableCell className="font-medium">
+                      <div>{order.content}</div>
+                      {(order.type === 'mid' || order.type === 'wait_for') && order.ordersSoFar !== undefined && order.ordersTarget !== undefined && (
+                        <div className="mt-2">
+                          <div className="flex justify-between items-center mb-1">
+                            <span className="text-xs text-muted-foreground">
+                              Progress
+                            </span>
+                             <span className="text-xs font-semibold text-foreground">
+                              {order.ordersSoFar}/{order.ordersTarget}
+                            </span>
+                          </div>
+                          <Progress value={(order.ordersSoFar / order.ordersTarget) * 100} className="h-2" />
+                        </div>
+                      )}
+                    </TableCell>
                     <TableCell>{order.amount.toFixed(2)}</TableCell>
                     <TableCell>{order.location}</TableCell>
                     <TableCell>
