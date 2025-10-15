@@ -9,7 +9,6 @@ import { ArrowLeft, User, MapPin, CircleCheck, CircleDashed } from 'lucide-react
 import type { DeliveryBatch } from '@/types/delivery';
 import { cn } from '@/lib/utils';
 import CountdownTimer from '@/components/CountdownTimer';
-import BottomNavbar from '@/components/BottomNavbar';
 
 interface OrderDetailsPageProps {
   params: {
@@ -69,17 +68,12 @@ const OrderDetailsPage: NextPage<OrderDetailsPageProps> = ({ params }) => {
   };
 
   return (
-    <div className="relative min-h-screen flex flex-col bg-muted/30">
-      <header className="sticky top-0 z-30 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 items-center px-4">
-          <Button variant="ghost" size="icon" className="mr-2" onClick={() => router.back()}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <h1 className="text-xl font-bold tracking-tight truncate">Order Details</h1>
-        </div>
-      </header>
-      <main className="flex-grow flex flex-col items-center p-4 md:p-6 pb-20">
-        <Card className="w-full max-w-2xl shadow-md">
+    <div className="space-y-6">
+       <Button variant="ghost" onClick={() => router.back()}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back
+        </Button>
+        <Card className="w-full shadow-md">
           <CardHeader>
             <div className="flex justify-between items-start">
               <div>
@@ -128,8 +122,6 @@ const OrderDetailsPage: NextPage<OrderDetailsPageProps> = ({ params }) => {
             )}
           </CardContent>
         </Card>
-      </main>
-      <BottomNavbar />
     </div>
   );
 };

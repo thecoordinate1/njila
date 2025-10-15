@@ -1,17 +1,19 @@
 import type { Metadata } from "next";
-import { PT_Sans } from "next/font/google";
+import { Poppins } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
+import Sidebar from "@/components/Sidebar";
+import Header from "@/components/Header";
 
-const ptSans = PT_Sans({ 
+const poppins = Poppins({ 
   subsets: ["latin"], 
-  weight: ["400", "700"], 
+  weight: ["400", "500", "600", "700"], 
   variable: "--font-sans" 
 });
 
 export const metadata: Metadata = {
-  title: "Ngila",
-  description: "Ngila Manager Dashboard - Efficient courier services.",
+  title: "Njila",
+  description: "Njila Logistics Dashboard - Efficient delivery coordination.",
 };
 
 export default function RootLayout({
@@ -25,10 +27,18 @@ export default function RootLayout({
       <body
         className={cn(
           "min-h-screen bg-background font-sans antialiased",
-          ptSans.variable
+          poppins.variable
         )}
       >
-        {children}
+        <div className="flex min-h-screen w-full">
+          <Sidebar />
+          <div className="flex flex-1 flex-col">
+            <Header />
+            <main className="flex-1 overflow-y-auto p-6 md:p-8">
+              {children}
+            </main>
+          </div>
+        </div>
       </body>
     </html>
   );

@@ -3,7 +3,6 @@
 
 import type { NextPage } from 'next';
 import { Suspense, useState } from 'react';
-import BottomNavbar from '@/components/BottomNavbar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
   Table,
@@ -15,7 +14,6 @@ import {
 } from "@/components/ui/table";
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { LayoutDashboard } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -73,15 +71,16 @@ const getTypeBadgeVariant = (orderType: OrderType) => {
   }
 };
 
-const getStatusBadgeVariant = (status: OrderStatus) => {
+const getStatusBadgeColor = (status: OrderStatus) => {
   switch (status) {
     case 'Delivering':
-      return 'default'; // default is primary color (teal)
+      return 'bg-purple-500/20 text-purple-400 border-purple-500/30';
     case 'Picking Up':
-      return 'secondary'; // secondary is a lighter teal
+      return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
     case 'Confirmed':
+      return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
     default:
-      return 'outline'; // outline is a gray-ish border
+      return 'bg-slate-500/20 text-slate-400 border-slate-500/30';
   }
 };
 
@@ -110,7 +109,8 @@ const HomePageContent: NextPage = () => {
     }
   };
   
-  const openConfirmationDialog = (orderId: string, newStatus: OrderStatus) => {
+  const openConfirmationDialog = (e: React.MouseEvent, orderId: string, newStatus: OrderStatus) => {
+    e.stopPropagation(); // prevent row click from firing
     setDialogState({ isOpen: true, orderId, newStatus });
   };
   
@@ -120,7 +120,6 @@ const HomePageContent: NextPage = () => {
       setOrders(currentOrders =>
         currentOrders.map(o => (o.id === orderId ? { ...o, status: newStatus } : o))
       );
-      console.log(`Order ${orderId} status updated to ${newStatus}`);
     }
     // Close dialog
     setDialogState({ isOpen: false, orderId: null, newStatus: null });
@@ -128,101 +127,88 @@ const HomePageContent: NextPage = () => {
 
   return (
     <>
-      <div className="flex flex-col h-screen overflow-hidden">
-        <header className="sticky top-0 z-30 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <div className="container mx-auto h-16 flex items-center justify-between px-4">
-            <h1 className="text-xl font-bold text-primary flex items-center">
-              <LayoutDashboard className="inline-block mr-2 h-6 w-6 align-text-bottom" />
-              Manager Dashboard
-            </h1>
-          </div>
-        </header>
-
-        <main className="flex-grow p-4 overflow-y-auto space-y-4">
-          <Card className="shadow-lg rounded-lg bg-card w-full">
-            <CardHeader>
-              <CardTitle>Active Orders</CardTitle>
-              <CardDescription>A real-time overview of ongoing deliveries.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Order Content</TableHead>
-                    <TableHead>Amount (ZMW)</TableHead>
-                    <TableHead>Location</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {orders.map((order) => (
-                    <TableRow 
-                      key={order.id}
-                      onClick={() => handleRowClick(order)}
-                      className={cn(
-                        Array.isArray(order.location) && "cursor-pointer"
-                      )}
-                    >
-                      <TableCell className="font-medium">
-                        <div>{order.content}</div>
-                        {(order.type === 'mid' || order.type === 'wait_for') && order.ordersSoFar !== undefined && order.ordersTarget !== undefined && (
-                          <div className="mt-2">
-                            <div className="flex justify-between items-center mb-1">
-                              <span className="text-xs text-muted-foreground">
-                                Progress
-                              </span>
-                              <span className="text-xs font-semibold text-foreground">
-                                {order.ordersSoFar}/{order.ordersTarget}
-                              </span>
-                            </div>
-                            <Progress value={(order.ordersSoFar / order.ordersTarget) * 100} className="h-2" />
+      <div className="space-y-6">
+        <Card className="shadow-lg rounded-lg bg-card w-full">
+          <CardHeader>
+            <CardTitle>Active Orders</CardTitle>
+            <CardDescription>A real-time overview of ongoing deliveries.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Order Content</TableHead>
+                  <TableHead>Amount (ZMW)</TableHead>
+                  <TableHead>Location</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {orders.map((order) => (
+                  <TableRow 
+                    key={order.id}
+                    onClick={() => handleRowClick(order)}
+                    className={cn(
+                      Array.isArray(order.location) && "cursor-pointer hover:bg-muted/50"
+                    )}
+                  >
+                    <TableCell className="font-medium">
+                      <div>{order.content}</div>
+                      {(order.type === 'mid' || order.type === 'wait_for') && order.ordersSoFar !== undefined && order.ordersTarget !== undefined && (
+                        <div className="mt-2">
+                          <div className="flex justify-between items-center mb-1">
+                            <span className="text-xs text-muted-foreground">
+                              Progress
+                            </span>
+                            <span className="text-xs font-semibold text-foreground">
+                              {order.ordersSoFar}/{order.ordersTarget}
+                            </span>
                           </div>
-                        )}
-                      </TableCell>
-                      <TableCell>{order.amount.toFixed(2)}</TableCell>
-                      <TableCell>
-                        {Array.isArray(order.location) ? (
-                          <span className="font-semibold text-primary">Multiple</span>
-                        ) : (
-                          order.location
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={getTypeBadgeVariant(order.type)}>
-                          {formatOrderType(order.type)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                         <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="p-0 h-auto">
-                              <Badge variant={getStatusBadgeVariant(order.status)} className="cursor-pointer hover:opacity-80 transition-opacity">
-                                {order.status}
-                              </Badge>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            {ALL_STATUSES.filter(s => s !== order.status).map(status => (
-                              <DropdownMenuItem 
-                                key={status}
-                                onClick={() => openConfirmationDialog(order.id, status)}
-                              >
-                                Mark as {status}
-                              </DropdownMenuItem>
-                            ))}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </main>
-
-        <BottomNavbar />
+                          <Progress value={(order.ordersSoFar / order.ordersTarget) * 100} className="h-2" />
+                        </div>
+                      )}
+                    </TableCell>
+                    <TableCell>{order.amount.toFixed(2)}</TableCell>
+                    <TableCell>
+                      {Array.isArray(order.location) ? (
+                        <span className="font-semibold text-primary">Multiple</span>
+                      ) : (
+                        order.location
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={getTypeBadgeVariant(order.type)}>
+                        {formatOrderType(order.type)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                       <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="p-0 h-auto" onClick={(e) => e.stopPropagation()}>
+                             <Badge className={cn("cursor-pointer hover:opacity-80 transition-opacity", getStatusBadgeColor(order.status))}>
+                              {order.status}
+                            </Badge>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          {ALL_STATUSES.filter(s => s !== order.status).map(status => (
+                            <DropdownMenuItem 
+                              key={status}
+                              onClick={(e) => openConfirmationDialog(e, order.id, status)}
+                            >
+                              Mark as {status}
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
       </div>
 
       <AlertDialog open={dialogState.isOpen} onOpenChange={(isOpen) => setDialogState(prev => ({ ...prev, isOpen }))}>
@@ -251,7 +237,7 @@ const HomePageContent: NextPage = () => {
 
 const HomePage: NextPage = () => {
   return (
-    <Suspense fallback={<div className="flex h-screen w-screen items-center justify-center">Loading page...</div>}>
+    <Suspense fallback={<div>Loading...</div>}>
       <HomePageContent />
     </Suspense>
   );
