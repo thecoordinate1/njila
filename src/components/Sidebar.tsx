@@ -3,8 +3,9 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Truck, Package, ListChecks, BarChart2, Settings, LifeBuoy } from 'lucide-react';
+import { Truck, Package, ListChecks, BarChart2, Settings, LifeBuoy, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Button } from './ui/button';
 
 const navItems = [
   { href: '/', label: 'Dashboard', icon: ListChecks },
@@ -18,7 +19,12 @@ const bottomNavItems = [
     { href: '/support', label: 'Support', icon: LifeBuoy },
 ]
 
-const Sidebar = () => {
+interface SidebarProps {
+  isCollapsed: boolean;
+  toggleSidebar: () => void;
+}
+
+const Sidebar = ({ isCollapsed, toggleSidebar }: SidebarProps) => {
   const pathname = usePathname();
 
   const navLinkClasses = (href: string) =>
@@ -28,20 +34,23 @@ const Sidebar = () => {
     );
 
   return (
-    <div className="hidden border-r bg-card md:block w-64">
+    <div className={cn(
+        "hidden border-r bg-card md:block transition-all duration-300 ease-in-out",
+        isCollapsed ? "w-20" : "w-64"
+    )}>
       <div className="flex h-full max-h-screen flex-col gap-2">
         <div className="flex h-14 items-center border-b px-6">
           <Link href="/" className="flex items-center gap-2 font-semibold text-lg">
             <Truck className="h-6 w-6 text-primary" />
-            <span>Njila</span>
+            {!isCollapsed && <span>Njila</span>}
           </Link>
         </div>
         <div className="flex-1 overflow-y-auto py-2">
           <nav className="grid items-start px-4 text-sm font-medium">
             {navItems.map(({ href, label, icon: Icon }) => (
-              <Link key={href} href={href} className={navLinkClasses(href)}>
+              <Link key={href} href={href} className={navLinkClasses(href)} title={isCollapsed ? label : undefined}>
                 <Icon className="h-4 w-4" />
-                {label}
+                {!isCollapsed && label}
               </Link>
             ))}
           </nav>
@@ -49,12 +58,20 @@ const Sidebar = () => {
         <div className="mt-auto p-4 border-t">
            <nav className="grid items-start text-sm font-medium gap-1">
              {bottomNavItems.map(({ href, label, icon: Icon }) => (
-                <Link key={href} href={href} className={navLinkClasses(href)}>
+                <Link key={href} href={href} className={navLinkClasses(href)} title={isCollapsed ? label : undefined}>
                     <Icon className="h-4 w-4" />
-                    {label}
+                    {!isCollapsed && label}
                 </Link>
              ))}
            </nav>
+            <Button
+                variant="ghost"
+                className="w-full justify-center mt-4"
+                onClick={toggleSidebar}
+            >
+                {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+                <span className="sr-only">Toggle Sidebar</span>
+            </Button>
         </div>
       </div>
     </div>
