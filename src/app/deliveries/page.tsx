@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { MoreHorizontal } from 'lucide-react';
+import { MoreHorizontal, RouteIcon } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -116,7 +116,11 @@ const DeliveriesPage: NextPage = () => {
                 <TableCell>{delivery.deliveryAddress}</TableCell>
                 <TableCell>{delivery.tier}</TableCell>
                 {status !== 'Pending' && <TableCell>{delivery.driver || 'N/A'}</TableCell>}
-                <TableCell>
+                <TableCell className="flex items-center justify-end gap-2">
+                   <Button variant="outline" size="sm" className="bg-green-500/10 text-green-500 border-green-500/20 hover:bg-green-500/20 hover:text-green-400">
+                        <RouteIcon className="h-4 w-4 mr-2"/>
+                        Route
+                    </Button>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button aria-haspopup="true" size="icon" variant="ghost">
