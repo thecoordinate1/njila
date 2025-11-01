@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -35,17 +34,16 @@ const Sidebar = ({ isCollapsed, toggleSidebar }: SidebarProps) => {
 
   return (
     <div className={cn(
-        "hidden border-r bg-card md:block transition-all duration-300 ease-in-out",
+        "fixed top-0 left-0 z-40 h-screen hidden border-r bg-background md:flex flex-col transition-all duration-300 ease-in-out",
         isCollapsed ? "w-20" : "w-64"
     )}>
-      <div className="flex h-full max-h-screen flex-col gap-2">
-        <div className="flex h-14 items-center border-b px-6">
+      <div className="flex h-14 items-center border-b px-6">
           <Link href="/" className="flex items-center gap-2 font-semibold text-lg">
             <Truck className="h-6 w-6 text-primary" />
             {!isCollapsed && <span>Njila</span>}
           </Link>
         </div>
-        <div className="flex-1 overflow-y-auto py-2">
+      <div className="flex-1 overflow-y-auto py-2">
           <nav className="grid items-start px-4 text-sm font-medium">
             {navItems.map(({ href, label, icon: Icon }) => (
               <Link key={href} href={href} className={navLinkClasses(href)} title={isCollapsed ? label : undefined}>
@@ -55,7 +53,7 @@ const Sidebar = ({ isCollapsed, toggleSidebar }: SidebarProps) => {
             ))}
           </nav>
         </div>
-        <div className="mt-auto p-4 border-t">
+      <div className="mt-auto p-4 border-t">
            <nav className="grid items-start text-sm font-medium gap-1">
              {bottomNavItems.map(({ href, label, icon: Icon }) => (
                 <Link key={href} href={href} className={navLinkClasses(href)} title={isCollapsed ? label : undefined}>
@@ -73,7 +71,6 @@ const Sidebar = ({ isCollapsed, toggleSidebar }: SidebarProps) => {
                 <span className="sr-only">Toggle Sidebar</span>
             </Button>
         </div>
-      </div>
     </div>
   );
 };
