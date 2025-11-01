@@ -33,6 +33,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { RouteIcon } from 'lucide-react';
 
 
 type OrderType = 'express' | 'mid' | 'wait_for';
@@ -142,6 +143,7 @@ const HomePageContent: NextPage = () => {
                   <TableHead>Location</TableHead>
                   <TableHead>Type</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -202,6 +204,12 @@ const HomePageContent: NextPage = () => {
                           ))}
                         </DropdownMenuContent>
                       </DropdownMenu>
+                    </TableCell>
+                    <TableCell className="flex items-center justify-end gap-2">
+                       <Button variant="outline" size="sm" className="bg-green-500/10 text-green-500 border-green-500/20 hover:bg-green-500/20 hover:text-green-400">
+                            <RouteIcon className="h-4 w-4 mr-2"/>
+                            Route
+                        </Button>
                     </TableCell>
                   </TableRow>
                 ))}
